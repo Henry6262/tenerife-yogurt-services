@@ -1,0 +1,202 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model Business {
+  id        String   @id @default(uuid())
+  name      String
+  slug      String   @unique
+  type      String   // salon, spa, barbershop, nail_studio
+  address   String
+  phone     String
+  email     String?
+  timezone  String   @default("Atlantic/Canary")
+  currency  String   @default("EUR")
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+
+  services    Service[]
+  staff       Staff[]
+  bookings    Booking[]
+  agentConfig AgentConfig?
+}
+
+model Service {
+  id              String @id @default(uuid())
+  businessId      String
+  name            String
+  description     String?
+  durationMinutes Int
+  price           Float
+  colorCode       String   @default("#f43f5e")
+  isActive        Boolean  @default(true)
+  createdAt       DateTime @default(now())
+
+  business       Business        @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  staffServices  StaffService[]
+  bookings       Booking[]
+}
+
+model Staff {
+  id        String   @id @default(uuid())
+  businessId String
+  name      String
+  email     String?
+  phone     String?
+  avatarUrl String?
+  bio       String?
+  colorCode String   @default("#3b82f6")
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+
+  business       Business        @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  staffServices  StaffService[]
+  schedules      StaffSchedule[]
+  overrides      StaffOverride[]
+  bookings       Booking[]
+}
+
+model StaffService {
+  staffId   String
+  serviceId String
+  staff     Staff   @relation(fields: [staffId], references: [id], onDelete: Cascade)
+  service   Service @relation(fields: [serviceId], references: [id], onDelete: Cascade)
+
+  @@id([staffId, serviceId])
+}
+
+model StaffSchedule {
+  id          String @id @default(uuid())
+  staffId     String
+  weekday     Int    // 0 = Sunday, 1 = Monday, ...
+  startMinute Int    // minutes from midnight
+  endMinute   Int
+  staff       Staff  @relation(fields: [staffId], references: [id], onDelete: Cascade)
+
+  @@unique([staffId, weekday])
+}
+
+model StaffOverride {
+  id          String   @id @default(uuid())
+  staffId     String
+  date        String   // YYYY-MM-DD
+  isClosed    Boolean  @default(false)
+  startMinute Int?
+  endMinute   Int?
+  staff       Staff    @relation(fields: [staffId], references: [id], onDelete: Cascade)
+}
+
+model Customer {
+  id        String   @id @default(uuid())
+  phone     String   @unique
+  email     String?
+  name      String
+  createdAt DateTime @default(now())
+
+  bookings Booking[]
+}
+
+model AgentConfig {
+  id                String   @id @default(uuid())
+  businessId        String   @unique
+  agentName         String   @default("Asistente")
+  gender            String   @default("female") // female, male, neutral
+  tone              String   @default("friendly") // friendly, professional, casual, luxury, playful, calm
+  personalityTraits String   @default("") // comma-separated: "entusiasta, paciente, divertido"
+  voiceType         String   @default("default") // default, warm, energetic, soft, authoritative
+  speakingSpeed     Int      @default(100) // 50-150%
+  greeting          String   @default("¡Hola! Soy tu asistente de belleza. ¿En qué puedo ayudarte hoy?")
+  farewell          String   @default("¡Gracias por confiar en nosotros! Te esperamos.")
+  fallbackMessage   String   @default("Lo siento, no entendí bien. ¿Puedes repetirlo?")
+  brandGuidelines   String   @default("") // free text: "Usamos solo productos veganos", "Ofrecemos champagne gratis"
+  specialInstructions String @default("") // "Si preguntan por alergias, preguntar por gluten", etc.
+  avatarUrl         String?
+  primaryColor      String   @default("#f43f5e")
+  isActive          Boolean  @default(true)
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @default(now())
+
+  business      Business       @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  conversations Conversation[]
+}
+
+model Conversation {
+  id           String   @id @default(uuid())
+  agentId      String
+  customerName String?
+  customerPhone String?
+  status       String   @default("active") // active, closed, booked
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @default(now())
+
+  agent    AgentConfig    @relation(fields: [agentId], references: [id], onDelete: Cascade)
+  messages AgentMessage[]
+}
+
+model AgentMessage {
+  id             String   @id @default(uuid())
+  conversationId String
+  role           String   // user, agent, system
+  text           String
+  metadata       String?  // JSON: {serviceId, slotTime, etc.}
+  createdAt      DateTime @default(now())
+
+  conversation Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+}
+
+model Booking {
+  id          String   @id @default(uuid())
+  businessId  String
+  customerId  String?
+  customerName String
+  customerPhone String
+  customerEmail String?
+  serviceId   String
+  staffId     String
+  startsAt    DateTime
+  endsAt      DateTime
+  status      String   @default("confirmed") // confirmed, cancelled, completed, no_show
+  notes       String?
+  conversationId String?
+  createdAt   DateTime @default(now())
+
+  business  Business  @relation(fields: [businessId], references: [id])
+  customer  Customer? @relation(fields: [customerId], references: [id])
+  service   Service   @relation(fields: [serviceId], references: [id])
+  staff     Staff     @relation(fields: [staffId], references: [id])
+}
+
+model YogurtLead {
+  id        String   @id @default(uuid())
+  name      String
+  phone     String
+  email     String?
+  source    String   @default("qr") // qr, event, instagram, etc.
+  eventLocation String?
+  status    String   @default("new") // new, contacted, converted, dead
+  orderType String   @default("one-time") // one-time, subscription
+  address   String?
+  deliveredAt DateTime?
+  notes     String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  subscription YogurtSubscription?
+}
+
+model YogurtSubscription {
+  id        String   @id @default(uuid())
+  leadId    String   @unique
+  lead      YogurtLead @relation(fields: [leadId], references: [id], onDelete: Cascade)
+  stripeSubscriptionId String @unique
+  status    String   @default("active") // active, paused, cancelled
+  frequency String   @default("weekly") // weekly, biweekly
+  nextDelivery DateTime?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}

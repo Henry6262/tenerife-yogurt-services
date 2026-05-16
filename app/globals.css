@@ -1,0 +1,87 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap');
+
+@layer base {
+  :root {
+    --background: 0 0% 100%;
+    --foreground: 222 47% 6%;
+    --card: 0 0% 100%;
+    --card-foreground: 222 47% 6%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 222 47% 6%;
+    --primary: 221 83% 53%;
+    --primary-foreground: 0 0% 100%;
+    --secondary: 210 40% 96%;
+    --secondary-foreground: 222 47% 6%;
+    --muted: 210 40% 96%;
+    --muted-foreground: 215 16% 47%;
+    --accent: 210 40% 96%;
+    --accent-foreground: 222 47% 6%;
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 0 0% 100%;
+    --border: 214 32% 91%;
+    --input: 214 32% 91%;
+    --ring: 221 83% 53%;
+    --radius: 0.75rem;
+  }
+
+  body {
+    @apply bg-white text-slate-900 antialiased;
+    font-family: "Inter", system-ui, sans-serif;
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    @apply font-semibold tracking-tight;
+  }
+}
+
+@layer components {
+  .glass {
+    @apply bg-white/70 backdrop-blur-xl border border-white/20;
+  }
+
+  .glass-dark {
+    @apply bg-slate-900/80 backdrop-blur-xl border border-white/10;
+  }
+
+  .glass-card {
+    @apply bg-white/60 backdrop-blur-2xl border border-slate-200/60 rounded-2xl shadow-[0_8px_32px_rgba(0,0,0,0.04)];
+  }
+
+  .glow-blue {
+    box-shadow: 0 0 40px rgba(37, 99, 235, 0.15);
+  }
+
+  .glow-blue-lg {
+    box-shadow: 0 0 60px rgba(37, 99, 235, 0.25);
+  }
+
+  .text-gradient-blue {
+    @apply bg-clip-text text-transparent bg-gradient-to-r from-blue-600 via-blue-500 to-cyan-500;
+  }
+
+  .bg-gradient-radial {
+    background: radial-gradient(ellipse at center, var(--tw-gradient-from) 0%, var(--tw-gradient-to) 70%);
+  }
+
+  .spotlight {
+    background: radial-gradient(600px circle at var(--mouse-x, 50%) var(--mouse-y, 50%), rgba(59, 130, 246, 0.06), transparent 40%);
+  }
+
+  .border-beam {
+    background: linear-gradient(90deg, transparent, #2563eb, #3b82f6, #06b6d4, transparent);
+    background-size: 200% 100%;
+    animation: borderBeam 3s linear infinite;
+  }
+}
+
+@layer utilities {
+  .animate-delay-100 { animation-delay: 100ms; }
+  .animate-delay-200 { animation-delay: 200ms; }
+  .animate-delay-300 { animation-delay: 300ms; }
+  .animate-delay-400 { animation-delay: 400ms; }
+  .animate-delay-500 { animation-delay: 500ms; }
+}
