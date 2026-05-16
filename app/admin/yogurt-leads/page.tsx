@@ -85,7 +85,9 @@ export default async function YogurtLeadsAdminPage() {
                   </td>
                   <td className="px-4 py-3">
                     <div className="flex flex-col gap-1">
-                      <form action={sendLeadWhatsApp.bind(null, lead.id, "leadFollowUp")}>
+                      <form action={sendLeadWhatsApp}>
+                        <input type="hidden" name="id" value={lead.id} />
+                        <input type="hidden" name="template" value="followup" />
                         <button
                           type="submit"
                           className="text-xs bg-stone-100 hover:bg-stone-200 text-stone-700 px-2 py-1 rounded transition"
@@ -93,7 +95,9 @@ export default async function YogurtLeadsAdminPage() {
                           📩 Seguimiento
                         </button>
                       </form>
-                      <form action={sendLeadWhatsApp.bind(null, lead.id, "orderConfirmation")}>
+                      <form action={sendLeadWhatsApp}>
+                        <input type="hidden" name="id" value={lead.id} />
+                        <input type="hidden" name="template" value="orderConfirmation" />
                         <button
                           type="submit"
                           className="text-xs bg-emerald-100 hover:bg-emerald-200 text-emerald-700 px-2 py-1 rounded transition"
@@ -101,7 +105,9 @@ export default async function YogurtLeadsAdminPage() {
                           ✅ Confirmar pedido
                         </button>
                       </form>
-                      <form action={sendLeadWhatsApp.bind(null, lead.id, "deliveryReminder")}>
+                      <form action={sendLeadWhatsApp}>
+                        <input type="hidden" name="id" value={lead.id} />
+                        <input type="hidden" name="template" value="deliveryReminder" />
                         <button
                           type="submit"
                           className="text-xs bg-blue-100 hover:bg-blue-200 text-blue-700 px-2 py-1 rounded transition"

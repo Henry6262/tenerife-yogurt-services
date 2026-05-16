@@ -103,7 +103,8 @@ export default async function DeliveriesPage() {
                     })}
                   </td>
                   <td className="px-4 py-3">
-                    <form action={markDelivered.bind(null, lead.id)}>
+                    <form action={markDelivered}>
+                      <input type="hidden" name="id" value={lead.id} />
                       <button
                         type="submit"
                         className="text-xs bg-emerald-100 hover:bg-emerald-200 text-emerald-700 px-3 py-1.5 rounded transition font-medium"

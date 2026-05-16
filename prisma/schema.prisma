@@ -200,3 +200,53 @@ model YogurtSubscription {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 }
+
+model Product {
+  id          String   @id @default(uuid())
+  name        String
+  slug        String   @unique
+  description String?
+  price       Float
+  comparePrice Float?   // "was €12" strikethrough pricing
+  imageUrl    String?
+  isSubscription Boolean @default(false)
+  subscriptionInterval String? // week, biweek, month
+  isBundle    Boolean  @default(false)
+  bundleItems String?  // JSON: [{productId, quantity}]
+  isActive    Boolean  @default(true)
+  sortOrder   Int      @default(0)
+  createdAt   DateTime @default(now())
+
+  orderItems  OrderItem[]
+}
+
+model Order {
+  id          String   @id @default(uuid())
+  customerName String
+  customerPhone String
+  customerEmail String?
+  address     String
+  status      String   @default("pending") // pending, confirmed, preparing, out_for_delivery, delivered, cancelled
+  paymentStatus String @default("pending") // pending, paid, failed, refunded
+  stripeSessionId String? @unique
+  stripePaymentIntentId String?
+  total       Float
+  notes       String?
+  deliveredAt DateTime?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  items       OrderItem[]
+}
+
+model OrderItem {
+  id        String   @id @default(uuid())
+  orderId   String
+  order     Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  productId String
+  product   Product  @relation(fields: [productId], references: [id])
+  productName String // snapshot at time of order
+  quantity  Int
+  unitPrice Float
+  total     Float
+}

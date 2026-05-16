@@ -1,139 +1,156 @@
 "use server";
 
-import { redirect } from "next/navigation";
+import { stripe } from "@/lib/stripe";
 import { db } from "@/lib/db";
-import { stripe, BASE_URL } from "@/lib/stripe";
 import { sendWhatsAppMessage, TEMPLATES } from "@/lib/whatsapp";
+import { redirect } from "next/navigation";
+import { revalidatePath } from "next/cache";
 
-export async function createYogurtLead(formData: FormData) {
-  const name = formData.get("name") as string;
-  const phone = formData.get("phone") as string;
-  const email = formData.get("email") as string | null;
-  const address = formData.get("address") as string;
-  const source = (formData.get("source") as string) || "qr";
-  const eventLocation = (formData.get("eventLocation") as string) || null;
-  const orderType = (formData.get("orderType") as string) || "one-time";
+const BASE_URL = process.env.NEXT_PUBLIC_BASE_URL || "http://localhost:3000";
 
-  if (!name || !phone || !address) {
-    redirect("/yogurt?error=missing-fields");
-  }
+/* ─────────────── Order / Checkout ─────────────── */
 
-  const cleanPhone = phone.trim().replace(/\s/g, "");
-  const normalizedPhone = cleanPhone.startsWith("+")
-    ? cleanPhone
-    : cleanPhone.startsWith("00")
-    ? "+" + cleanPhone.slice(2)
-    : "+34" + cleanPhone.replace(/^0/, "");
+export async function createOrder(formData: FormData) {
+  const productId = formData.get("productId") as string;
+  const productName = formData.get("productName") as string;
+  const price = Number(formData.get("price"));
 
-  let lead;
-  try {
-    lead = await db.yogurtLead.create({
-      data: {
-        name: name.trim(),
-        phone: normalizedPhone,
-        email: email?.trim() || null,
-        address: address.trim(),
-        source,
-        eventLocation,
-        orderType,
-      },
-    });
-  } catch (err: any) {
-    console.error("Lead save error:", err);
-    redirect("/yogurt?error=save-failed");
-  }
-
-  const isSubscription = orderType === "subscription";
-
-  let session;
-  try {
-    session = await stripe.checkout.sessions.create({
-      line_items: [
-        {
-          price_data: {
-            currency: "eur",
-            unit_amount: isSubscription ? 800 : 1000,
-            product_data: {
-              name: isSubscription
-                ? "Caja Semanal Yogurt Griego — 4 tarros"
-                : "Pack Yogurt Griego Artesanal — 4 tarros",
-              description: "Entrega gratis en Santa Cruz / La Laguna",
-            },
-            ...(isSubscription && {
-              recurring: { interval: "week" },
-            }),
-          },
-          quantity: 1,
+  const session = await stripe.checkout.sessions.create({
+    line_items: [
+      {
+        price_data: {
+          currency: "eur",
+          product_data: { name: productName },
+          unit_amount: Math.round(price * 100),
         },
-      ],
-      mode: isSubscription ? "subscription" : "payment",
-      success_url: `${BASE_URL}/yogurt/success?session_id={CHECKOUT_SESSION_ID}&lead_id=${lead.id}&mode=${isSubscription ? "sub" : "payment"}`,
-      cancel_url: `${BASE_URL}/yogurt?error=cancelled`,
-      customer_email: email?.trim() || undefined,
-      metadata: {
-        leadId: lead.id,
-        name: name.trim(),
-        phone: normalizedPhone,
-        event: eventLocation || "",
-        orderType,
+        quantity: 1,
       },
-    });
-  } catch (err: any) {
-    console.error("Stripe session error:", err);
-    redirect("/yogurt?error=stripe-failed");
-  }
+    ],
+    mode: "payment",
+    success_url: `${BASE_URL}/yogurt/success?session_id={CHECKOUT_SESSION_ID}&product_id=${productId}`,
+    cancel_url: `${BASE_URL}/yogurt?canceled=1`,
+    shipping_address_collection: { allowed_countries: ["ES"] },
+    metadata: { productId, productName },
+  });
 
   if (!session.url) {
-    redirect("/yogurt?error=stripe-failed");
+    throw new Error("No checkout URL generated");
   }
 
   redirect(session.url);
 }
 
-export async function getYogurtLeads() {
-  return db.yogurtLead.findMany({
+export async function createSubscriptionOrder(formData: FormData) {
+  const productId = formData.get("productId") as string;
+  const productName = formData.get("productName") as string;
+  const price = Number(formData.get("price"));
+
+  const session = await stripe.checkout.sessions.create({
+    line_items: [
+      {
+        price_data: {
+          currency: "eur",
+          product_data: { name: productName },
+          unit_amount: Math.round(price * 100),
+          recurring: { interval: "week" },
+        },
+        quantity: 1,
+      },
+    ],
+    mode: "subscription",
+    success_url: `${BASE_URL}/yogurt/success?session_id={CHECKOUT_SESSION_ID}&product_id=${productId}&type=subscription`,
+    cancel_url: `${BASE_URL}/yogurt?canceled=1`,
+    subscription_data: { metadata: { productId, productName } },
+  });
+
+  if (!session.url) {
+    throw new Error("No checkout URL generated");
+  }
+
+  redirect(session.url);
+}
+
+export async function getOrdersByPhone(phone: string) {
+  const clean = phone.replace(/\D/g, "");
+  return db.order.findMany({
+    where: {
+      OR: [
+        { customerPhone: { contains: clean } },
+        { customerPhone: { contains: phone } },
+      ],
+    },
+    include: { items: true },
     orderBy: { createdAt: "desc" },
   });
 }
 
-export async function updateLeadStatus(id: string, status: string, notes?: string) {
-  return db.yogurtLead.update({
-    where: { id },
-    data: { status, ...(notes && { notes }) },
+export async function updateOrderStatus(orderId: string, status: string) {
+  await db.order.update({
+    where: { id: orderId },
+    data: { status },
+  });
+  revalidatePath("/admin/orders");
+  return { ok: true };
+}
+
+export async function getAllOrders() {
+  return db.order.findMany({
+    include: { items: { include: { product: true } } },
+    orderBy: { createdAt: "desc" },
   });
 }
 
-export async function sendLeadWhatsApp(leadId: string, template: "orderConfirmation" | "leadFollowUp" | "deliveryReminder") {
-  const lead = await db.yogurtLead.findUnique({ where: { id: leadId } });
-  if (!lead) throw new Error("Lead not found");
+/* ─────────────── Legacy lead actions ─────────────── */
 
-  const message = TEMPLATES[template](lead.name, `${BASE_URL}/yogurt?lead=${lead.id}`);
-  const result = await sendWhatsAppMessage(lead.phone, message);
+export async function getYogurtLeads() {
+  return db.yogurtLead.findMany({ orderBy: { createdAt: "desc" } });
+}
 
-  if (!result.success) {
-    throw new Error(result.error || "Failed to send WhatsApp");
-  }
+export async function sendLeadWhatsApp(formData: FormData) {
+  const id = formData.get("id") as string;
+  const template = formData.get("template") as string;
+
+  const lead = await db.yogurtLead.findUnique({ where: { id } });
+  if (!lead) return;
+
+  const message =
+    template === "followup"
+      ? TEMPLATES.leadFollowUp(lead.name, `${BASE_URL}/yogurt`)
+      : TEMPLATES.deliveryReminder(lead.name);
+
+  await sendWhatsAppMessage(lead.phone, message);
 
   await db.yogurtLead.update({
-    where: { id: leadId },
+    where: { id },
     data: { status: "contacted" },
   });
+
+  revalidatePath("/admin/yogurt-leads");
 }
 
 export async function getDeliveryLeads() {
   return db.yogurtLead.findMany({
     where: {
-      status: "converted",
+      status: { in: ["converted", "new", "contacted"] },
       deliveredAt: null,
-      address: { not: null },
     },
-    orderBy: { createdAt: "asc" },
+    orderBy: { createdAt: "desc" },
   });
 }
 
-export async function markDelivered(leadId: string) {
+export async function markDelivered(formData: FormData) {
+  const id = formData.get("id") as string;
   await db.yogurtLead.update({
-    where: { id: leadId },
-    data: { deliveredAt: new Date() },
+    where: { id },
+    data: { status: "converted", deliveredAt: new Date() },
   });
+  revalidatePath("/admin/deliveries");
+}
+
+export async function markDeliveredById(id: string) {
+  await db.yogurtLead.update({
+    where: { id },
+    data: { status: "converted", deliveredAt: new Date() },
+  });
+  revalidatePath("/admin/deliveries");
 }

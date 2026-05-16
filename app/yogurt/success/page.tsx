@@ -13,16 +13,16 @@ export default async function YogurtSuccessPage({
 }: {
   searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
 }) {
-  const { session_id, lead_id, mode } = await searchParams;
+  const { session_id, product_id, type, lead_id } = await searchParams;
 
   if (!session_id || typeof session_id !== "string") {
     redirect("/yogurt");
   }
 
-  let session;
+  let session: Stripe.Checkout.Session;
   try {
     session = await stripe.checkout.sessions.retrieve(session_id, {
-      expand: ["subscription"],
+      expand: ["subscription", "customer_details", "shipping_details"],
     });
   } catch {
     redirect("/yogurt?error=invalid-session");
@@ -32,8 +32,63 @@ export default async function YogurtSuccessPage({
     redirect("/yogurt?error=payment-pending");
   }
 
-  const isSubscription = mode === "sub" || session.mode === "subscription";
+  const isSubscription = type === "subscription" || session.mode === "subscription";
+  const customer = session.customer_details;
+  const phone = customer?.phone
+    ? customer.phone.replace(/\s/g, "")
+    : lead_id
+    ? (await db.yogurtLead.findUnique({ where: { id: lead_id as string } }))?.phone || ""
+    : "";
+  const name = customer?.name || "Cliente";
+  const shipping = (session as any).shipping_details;
+  const address = shipping?.address
+    ? `${shipping.address.line1 || ""}, ${shipping.address.postal_code || ""} ${shipping.address.city || ""}, ${shipping.address.country || ""}`
+    : "";
 
+  // Create or update order record
+  let order;
+  try {
+    const existing = await db.order.findUnique({
+      where: { stripeSessionId: session_id },
+      include: { items: true },
+    });
+
+    if (!existing && product_id && typeof product_id === "string") {
+      const product = await db.product.findUnique({ where: { id: product_id } });
+      if (product) {
+        order = await db.order.create({
+          data: {
+            customerName: name,
+            customerPhone: phone,
+            customerEmail: customer?.email || null,
+            address,
+            status: "confirmed",
+            paymentStatus: "paid",
+            stripeSessionId: session_id,
+            stripePaymentIntentId: (session.payment_intent as string) || null,
+            total: product.price,
+            notes: isSubscription ? "Suscripción semanal" : "Pedido único",
+            items: {
+              create: {
+                productId: product.id,
+                productName: product.name,
+                quantity: 1,
+                unitPrice: product.price,
+                total: product.price,
+              },
+            },
+          },
+          include: { items: true },
+        });
+      }
+    } else {
+      order = existing;
+    }
+  } catch {
+    // Order creation failed but don't block the success page
+  }
+
+  // Update lead if applicable
   if (lead_id && typeof lead_id === "string") {
     try {
       const lead = await db.yogurtLead.update({
@@ -41,7 +96,6 @@ export default async function YogurtSuccessPage({
         data: { status: "converted" },
       });
 
-      // Save subscription record if applicable
       if (isSubscription && session.subscription) {
         const sub = session.subscription as Stripe.Subscription & { current_period_end?: number };
         const nextDelivery = sub.current_period_end
@@ -59,11 +113,22 @@ export default async function YogurtSuccessPage({
         });
       }
 
-      // Auto-send WhatsApp confirmation
+      if (phone) {
+        const message = isSubscription
+          ? `¡Hola ${lead.name}! 🥛 Tu suscripción semanal de Yogurt Griego está activa.\n\nPrimera entrega: mañana entre 10:00 y 14:00.\n\nDespués, recibes tu caja cada semana automáticamente. Pausa o cancela cuando quieras respondiendo aquí.`
+          : TEMPLATES.orderConfirmation(lead.name);
+        await sendWhatsAppMessage(lead.phone, message);
+      }
+    } catch {
+      // ignore
+    }
+  } else if (phone && order) {
+    // Send confirmation even without lead_id
+    try {
       const message = isSubscription
-        ? `¡Hola ${lead.name}! 🥛 Tu suscripción semanal de Yogurt Griego está activa. \n\nPrima entrega: mañana entre 10:00 y 14:00. \n\nDespués, recibes tu caja cada semana automáticamente. Pausa o cancela cuando quieras respondiendo aquí.`
-        : TEMPLATES.orderConfirmation(lead.name);
-      await sendWhatsAppMessage(lead.phone, message);
+        ? `¡Hola ${name}! 🥛 Tu suscripción semanal de Yogurt Griego está activa.\n\nPrimera entrega: mañana entre 10:00 y 14:00.\n\nID: ${order.id.slice(0, 8)}`
+        : `¡Hola ${name}! 🥛 Tu pedido de Yogurt Griego está confirmado.\n\nEntrega: mañana entre 10:00 y 14:00.\n\nID: ${order.id.slice(0, 8)}`;
+      await sendWhatsAppMessage(phone, message);
     } catch {
       // ignore
     }
@@ -85,21 +150,26 @@ export default async function YogurtSuccessPage({
         <div className="bg-emerald-50 rounded-xl p-4 mb-6 text-left">
           <p className="text-sm text-emerald-800 font-semibold mb-1">Resumen</p>
           <p className="text-sm text-emerald-700">
-            {isSubscription
-              ? "Caja Semanal Yogurt Griego — 4 tarros/semana"
-              : "Pack Yogurt Griego Artesanal — 4 tarros"}
+            {order?.items?.[0]?.productName || (isSubscription ? "Caja Semanal Yogurt Griego" : "Pack Yogurt Griego Artesanal")}
           </p>
           <p className="text-lg font-bold text-emerald-800 mt-1">
-            {isSubscription ? "€8.00 / semana" : "€10.00"}
+            {isSubscription ? "€8.00 / semana" : `€${(session.amount_total || 1000) / 100}`}
           </p>
-          <p className="text-xs text-emerald-600 mt-1">
-            ID: {session_id.slice(0, 12)}...
-          </p>
+          {order && (
+            <p className="text-xs text-emerald-600 mt-1">Pedido: #{order.id.slice(0, 8)}</p>
+          )}
         </div>
 
         <a
-          href={`https://wa.me/?text=Hola%2C%20acabo%20de%20${isSubscription ? "activar%20mi%20suscripción" : "pagar%20mi%20pack"}%20de%20yogurt%20griego%20%F0%9F%A5%9B%20%28ID%3A%20${session_id.slice(0, 8)}%29`}
-          className="inline-block w-full bg-emerald-600 text-white font-bold py-3 rounded-xl hover:bg-emerald-700 transition"
+          href="/yogurt/orders"
+          className="inline-block w-full bg-emerald-600 text-white font-bold py-3 rounded-xl hover:bg-emerald-700 transition mb-3"
+        >
+          Ver mis pedidos
+        </a>
+
+        <a
+          href={`https://wa.me/${phone?.replace(/\D/g, "") || "34600000000"}?text=Hola%2C%20acabo%20de%20${isSubscription ? "activar%20mi%20suscripción" : "pagar%20mi%20pack"}%20de%20yogurt%20griego%20%F0%9F%A5%9B`}
+          className="inline-block w-full bg-white text-emerald-700 font-bold py-3 rounded-xl border border-emerald-200 hover:bg-emerald-50 transition"
         >
           Abrir WhatsApp
         </a>
@@ -114,5 +184,3 @@ export default async function YogurtSuccessPage({
     </main>
   );
 }
-
-
