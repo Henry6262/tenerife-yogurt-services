@@ -205,6 +205,22 @@ export default async function AdminPage() {
           </Card>
         </div>
 
+        {/* Low stock alerts */}
+        {products.some((p) => p.stock <= 5 && p.isActive) && (
+          <div className="mb-6 rounded-xl border border-amber-200 bg-amber-50 p-4">
+            <p className="text-sm font-semibold text-amber-800 mb-2">⚠️ Stock bajo</p>
+            <div className="flex flex-wrap gap-2">
+              {products.filter((p) => p.stock <= 5 && p.isActive).map((p) => (
+                <Link key={p.id} href="/admin/products">
+                  <span className="inline-flex items-center gap-1 rounded-full bg-white border border-amber-200 px-3 py-1 text-xs font-medium text-amber-700">
+                    {p.name}: {p.stock} restantes
+                  </span>
+                </Link>
+              ))}
+            </div>
+          </div>
+        )}
+
         {/* Recent yogurt orders */}
         <Card>
           <CardHeader className="pb-3">

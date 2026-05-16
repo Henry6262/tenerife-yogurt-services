@@ -214,6 +214,7 @@ model Product {
   subscriptionInterval String? // week, biweek, month
   isBundle    Boolean  @default(false)
   bundleItems String?  // JSON: [{productId, quantity}]
+  stock       Int      @default(0)
   isActive    Boolean  @default(true)
   sortOrder   Int      @default(0)
   createdAt   DateTime @default(now())

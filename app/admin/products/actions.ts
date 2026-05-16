@@ -14,6 +14,7 @@ export async function createProduct(formData: FormData) {
   const isSubscription = formData.get("isSubscription") === "on";
   const subscriptionInterval = (formData.get("subscriptionInterval") as string) || null;
   const isBundle = formData.get("isBundle") === "on";
+  const stock = Number(formData.get("stock") || 0);
   const sortOrder = Number(formData.get("sortOrder") || 0);
 
   await db.product.create({
@@ -26,6 +27,7 @@ export async function createProduct(formData: FormData) {
       isSubscription,
       subscriptionInterval,
       isBundle,
+      stock,
       sortOrder,
       isActive: true,
     },
@@ -48,6 +50,7 @@ export async function updateProduct(formData: FormData) {
   const subscriptionInterval = (formData.get("subscriptionInterval") as string) || null;
   const isBundle = formData.get("isBundle") === "on";
   const isActive = formData.get("isActive") === "on";
+  const stock = Number(formData.get("stock") || 0);
   const sortOrder = Number(formData.get("sortOrder") || 0);
 
   await db.product.update({
@@ -62,6 +65,7 @@ export async function updateProduct(formData: FormData) {
       subscriptionInterval,
       isBundle,
       isActive,
+      stock,
       sortOrder,
     },
   });

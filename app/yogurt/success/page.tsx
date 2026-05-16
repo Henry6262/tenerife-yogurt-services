@@ -106,6 +106,17 @@ export default async function YogurtSuccessPage({
           },
           include: { items: true },
         });
+        // Decrement stock for cart items
+        for (const item of cartItems) {
+          try {
+            await db.product.update({
+              where: { id: item.productId },
+              data: { stock: { decrement: item.quantity } },
+            });
+          } catch {
+            // ignore stock errors
+          }
+        }
       } else if (product_id && typeof product_id === "string") {
         const product = await db.product.findUnique({ where: { id: product_id } });
         if (product) {
@@ -132,6 +143,11 @@ export default async function YogurtSuccessPage({
               },
             },
             include: { items: true },
+          });
+          // Decrement stock
+          await db.product.update({
+            where: { id: product.id },
+            data: { stock: { decrement: 1 } },
           });
         }
       }

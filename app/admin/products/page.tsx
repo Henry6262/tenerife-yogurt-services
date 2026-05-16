@@ -64,6 +64,10 @@ export default async function AdminProductsPage() {
               </select>
             </div>
             <div>
+              <label className="block text-xs font-medium text-stone-500 mb-1">Stock</label>
+              <input name="stock" type="number" defaultValue={10} className="w-full rounded-lg border border-stone-200 px-3 py-2 text-sm focus:border-emerald-500 focus:outline-none" />
+            </div>
+            <div>
               <label className="block text-xs font-medium text-stone-500 mb-1">Orden</label>
               <input name="sortOrder" type="number" defaultValue={0} className="w-full rounded-lg border border-stone-200 px-3 py-2 text-sm focus:border-emerald-500 focus:outline-none" />
             </div>
@@ -166,6 +170,10 @@ export default async function AdminProductsPage() {
                               <option value="biweek">Quincenal</option>
                               <option value="month">Mensual</option>
                             </select>
+                          </div>
+                          <div>
+                            <label className="block text-xs font-medium text-stone-500 mb-1">Stock</label>
+                            <input name="stock" type="number" defaultValue={product.stock} className="w-full rounded-lg border border-stone-200 px-3 py-2 text-sm focus:border-emerald-500 focus:outline-none" />
                           </div>
                           <div>
                             <label className="block text-xs font-medium text-stone-500 mb-1">Orden</label>
