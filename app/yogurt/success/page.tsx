@@ -45,6 +45,20 @@ export default async function YogurtSuccessPage({
     ? `${shipping.address.line1 || ""}, ${shipping.address.postal_code || ""} ${shipping.address.city || ""}, ${shipping.address.country || ""}`
     : "";
 
+  // Build line items from metadata (cart) or product_id (single)
+  const meta = session.metadata || {};
+  const cartItems: { productId: string; productName: string; quantity: number }[] = [];
+
+  for (let i = 0; meta[`productId_${i}`]; i++) {
+    cartItems.push({
+      productId: meta[`productId_${i}`]!,
+      productName: meta[`productName_${i}`] || "Producto",
+      quantity: Number(meta[`quantity_${i}`]) || 1,
+    });
+  }
+
+  const isCart = cartItems.length > 0;
+
   // Create or update order record
   let order;
   try {
@@ -53,9 +67,9 @@ export default async function YogurtSuccessPage({
       include: { items: true },
     });
 
-    if (!existing && product_id && typeof product_id === "string") {
-      const product = await db.product.findUnique({ where: { id: product_id } });
-      if (product) {
+    if (!existing) {
+      if (isCart) {
+        const total = (session.amount_total || 0) / 100;
         order = await db.order.create({
           data: {
             customerName: name,
@@ -66,20 +80,48 @@ export default async function YogurtSuccessPage({
             paymentStatus: "paid",
             stripeSessionId: session_id,
             stripePaymentIntentId: (session.payment_intent as string) || null,
-            total: product.price,
-            notes: isSubscription ? "Suscripción semanal" : "Pedido único",
+            total,
+            notes: "Pedido desde carrito",
             items: {
-              create: {
-                productId: product.id,
-                productName: product.name,
-                quantity: 1,
-                unitPrice: product.price,
-                total: product.price,
-              },
+              create: cartItems.map((item) => ({
+                productId: item.productId,
+                productName: item.productName,
+                quantity: item.quantity,
+                unitPrice: 0, // we don't have per-item price in metadata, use total
+                total: 0,
+              })),
             },
           },
           include: { items: true },
         });
+      } else if (product_id && typeof product_id === "string") {
+        const product = await db.product.findUnique({ where: { id: product_id } });
+        if (product) {
+          order = await db.order.create({
+            data: {
+              customerName: name,
+              customerPhone: phone,
+              customerEmail: customer?.email || null,
+              address,
+              status: "confirmed",
+              paymentStatus: "paid",
+              stripeSessionId: session_id,
+              stripePaymentIntentId: (session.payment_intent as string) || null,
+              total: product.price,
+              notes: isSubscription ? "Suscripción semanal" : "Pedido único",
+              items: {
+                create: {
+                  productId: product.id,
+                  productName: product.name,
+                  quantity: 1,
+                  unitPrice: product.price,
+                  total: product.price,
+                },
+              },
+            },
+            include: { items: true },
+          });
+        }
       }
     } else {
       order = existing;
@@ -123,7 +165,6 @@ export default async function YogurtSuccessPage({
       // ignore
     }
   } else if (phone && order) {
-    // Send confirmation even without lead_id
     try {
       const message = isSubscription
         ? `¡Hola ${name}! 🥛 Tu suscripción semanal de Yogurt Griego está activa.\n\nPrimera entrega: mañana entre 10:00 y 14:00.\n\nID: ${order.id.slice(0, 8)}`
@@ -133,6 +174,9 @@ export default async function YogurtSuccessPage({
       // ignore
     }
   }
+
+  const firstItemName = order?.items?.[0]?.productName || (isSubscription ? "Caja Semanal" : "Pack Yogurt Griego");
+  const itemCount = order?.items?.length || 1;
 
   return (
     <main className="min-h-screen bg-stone-50 text-stone-900 flex flex-col items-center justify-center px-6">
@@ -150,7 +194,9 @@ export default async function YogurtSuccessPage({
         <div className="bg-emerald-50 rounded-xl p-4 mb-6 text-left">
           <p className="text-sm text-emerald-800 font-semibold mb-1">Resumen</p>
           <p className="text-sm text-emerald-700">
-            {order?.items?.[0]?.productName || (isSubscription ? "Caja Semanal Yogurt Griego" : "Pack Yogurt Griego Artesanal")}
+            {isCart && itemCount > 1
+              ? `${itemCount} artículos en el pedido`
+              : firstItemName}
           </p>
           <p className="text-lg font-bold text-emerald-800 mt-1">
             {isSubscription ? "€8.00 / semana" : `€${(session.amount_total || 1000) / 100}`}

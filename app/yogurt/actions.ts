@@ -40,6 +40,43 @@ export async function createOrder(formData: FormData) {
   redirect(session.url);
 }
 
+export async function checkoutCart(formData: FormData) {
+  const itemsJson = formData.get("items") as string;
+  const items: { productId: string; name: string; price: number; quantity: number }[] =
+    JSON.parse(itemsJson);
+
+  const lineItems = items.map((item) => ({
+    price_data: {
+      currency: "eur",
+      product_data: { name: item.name },
+      unit_amount: Math.round(item.price * 100),
+    },
+    quantity: item.quantity,
+  }));
+
+  const metadata: Record<string, string> = {};
+  items.forEach((item, i) => {
+    metadata[`productId_${i}`] = item.productId;
+    metadata[`productName_${i}`] = item.name;
+    metadata[`quantity_${i}`] = String(item.quantity);
+  });
+
+  const session = await stripe.checkout.sessions.create({
+    line_items: lineItems,
+    mode: "payment",
+    success_url: `${BASE_URL}/yogurt/success?session_id={CHECKOUT_SESSION_ID}&cart=1`,
+    cancel_url: `${BASE_URL}/yogurt/cart?canceled=1`,
+    shipping_address_collection: { allowed_countries: ["ES"] },
+    metadata,
+  });
+
+  if (!session.url) {
+    throw new Error("No checkout URL generated");
+  }
+
+  redirect(session.url);
+}
+
 export async function createSubscriptionOrder(formData: FormData) {
   const productId = formData.get("productId") as string;
   const productName = formData.get("productName") as string;
