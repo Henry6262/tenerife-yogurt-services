@@ -5,6 +5,7 @@ import { db } from "@/lib/db";
 import { sendWhatsAppMessage, TEMPLATES } from "@/lib/whatsapp";
 import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
+import type Stripe from "stripe";
 
 const BASE_URL = process.env.NEXT_PUBLIC_BASE_URL || "http://localhost:3000";
 
@@ -44,6 +45,7 @@ export async function checkoutCart(formData: FormData) {
   const itemsJson = formData.get("items") as string;
   const items: { productId: string; name: string; price: number; quantity: number }[] =
     JSON.parse(itemsJson);
+  const promoCode = formData.get("promoCode") as string;
 
   const lineItems = items.map((item) => ({
     price_data: {
@@ -61,14 +63,24 @@ export async function checkoutCart(formData: FormData) {
     metadata[`quantity_${i}`] = String(item.quantity);
   });
 
-  const session = await stripe.checkout.sessions.create({
+  const sessionConfig: Stripe.Checkout.SessionCreateParams = {
     line_items: lineItems,
     mode: "payment",
     success_url: `${BASE_URL}/yogurt/success?session_id={CHECKOUT_SESSION_ID}&cart=1`,
     cancel_url: `${BASE_URL}/yogurt/cart?canceled=1`,
     shipping_address_collection: { allowed_countries: ["ES"] },
     metadata,
-  });
+  };
+
+  if (promoCode) {
+    const promo = await db.promoCode.findUnique({ where: { code: promoCode } });
+    if (promo && promo.isActive) {
+      sessionConfig.discounts = [{ coupon: promo.stripeCouponId }];
+      metadata.promoCode = promo.code;
+    }
+  }
+
+  const session = await stripe.checkout.sessions.create(sessionConfig);
 
   if (!session.url) {
     throw new Error("No checkout URL generated");

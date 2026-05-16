@@ -59,6 +59,18 @@ export default async function YogurtSuccessPage({
 
   const isCart = cartItems.length > 0;
 
+  // Track promo code usage
+  if (meta.promoCode) {
+    try {
+      await db.promoCode.updateMany({
+        where: { code: meta.promoCode },
+        data: { usedCount: { increment: 1 } },
+      });
+    } catch {
+      // ignore
+    }
+  }
+
   // Create or update order record
   let order;
   try {

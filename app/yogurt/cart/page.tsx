@@ -5,8 +5,11 @@ import { useState } from "react";
 import { checkoutCart } from "../actions";
 
 export default function CartPage() {
-  const { items, removeItem, updateQuantity, totalItems, totalPrice, clearCart } = useCart();
+  const { items, removeItem, updateQuantity, totalItems, subtotal, discount, totalPrice, clearCart, promo, setPromo } = useCart();
   const [checkingOut, setCheckingOut] = useState(false);
+  const [promoInput, setPromoInput] = useState("");
+  const [promoError, setPromoError] = useState("");
+  const [promoLoading, setPromoLoading] = useState(false);
 
   async function handleCheckout() {
     if (items.length === 0) return;
@@ -14,10 +17,36 @@ export default function CartPage() {
     try {
       const formData = new FormData();
       formData.append("items", JSON.stringify(items));
+      if (promo) formData.append("promoCode", promo.code);
       await checkoutCart(formData);
     } catch (err) {
       console.error(err);
       setCheckingOut(false);
+    }
+  }
+
+  async function applyPromo() {
+    if (!promoInput.trim()) return;
+    setPromoLoading(true);
+    setPromoError("");
+    try {
+      const res = await fetch("/api/validate-promo?code=" + encodeURIComponent(promoInput.trim()));
+      const data = await res.json();
+      if (data.valid) {
+        setPromo({
+          code: data.code,
+          stripeCouponId: data.stripeCouponId,
+          discountType: data.discountType,
+          discountValue: data.discountValue,
+        });
+        setPromoInput("");
+      } else {
+        setPromoError(data.error || "Código no válido");
+      }
+    } catch {
+      setPromoError("Error al validar el código");
+    } finally {
+      setPromoLoading(false);
     }
   }
 
@@ -88,11 +117,57 @@ export default function CartPage() {
               ))}
             </div>
 
+            {/* Promo code */}
+            <div className="rounded-2xl border border-stone-200 bg-white p-4 mb-4">
+              <label className="block text-sm font-medium text-stone-700 mb-2">
+                ¿Tienes un código promocional?
+              </label>
+              <div className="flex gap-2">
+                <input
+                  type="text"
+                  value={promoInput}
+                  onChange={(e) => setPromoInput(e.target.value)}
+                  placeholder="Introduce tu código"
+                  className="flex-1 rounded-lg border border-stone-200 px-3 py-2 text-sm uppercase focus:border-emerald-500 focus:outline-none"
+                  disabled={!!promo}
+                />
+                {promo ? (
+                  <button
+                    onClick={() => setPromo(null)}
+                    className="rounded-lg bg-stone-100 px-4 py-2 text-sm font-medium text-stone-700 hover:bg-stone-200 transition"
+                  >
+                    Quitar {promo.code}
+                  </button>
+                ) : (
+                  <button
+                    onClick={applyPromo}
+                    disabled={promoLoading}
+                    className="rounded-lg bg-emerald-600 px-4 py-2 text-sm font-medium text-white hover:bg-emerald-700 transition disabled:opacity-50"
+                  >
+                    {promoLoading ? "..." : "Aplicar"}
+                  </button>
+                )}
+              </div>
+              {promoError && <p className="mt-2 text-xs text-red-600">{promoError}</p>}
+              {promo && (
+                <p className="mt-2 text-xs text-emerald-600">
+                  ✅ Código {promo.code} aplicado ({promo.discountType === "percentage" ? `${promo.discountValue}%` : `€${promo.discountValue}`} de descuento)
+                </p>
+              )}
+            </div>
+
+            {/* Summary */}
             <div className="rounded-2xl border border-stone-200 bg-white p-6 mb-6">
               <div className="flex items-center justify-between mb-2">
                 <span className="text-stone-500">Subtotal</span>
-                <span className="font-medium">€{totalPrice.toFixed(2)}</span>
+                <span className="font-medium">€{subtotal.toFixed(2)}</span>
               </div>
+              {discount > 0 && (
+                <div className="flex items-center justify-between mb-2">
+                  <span className="text-stone-500">Descuento {promo?.code}</span>
+                  <span className="font-medium text-emerald-600">−€{discount.toFixed(2)}</span>
+                </div>
+              )}
               <div className="flex items-center justify-between mb-4">
                 <span className="text-stone-500">Envío</span>
                 <span className="font-medium text-emerald-600">Gratis</span>
