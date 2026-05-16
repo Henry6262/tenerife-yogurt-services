@@ -1,6 +1,7 @@
 import { db } from "@/lib/db";
 import { updateOrderStatus } from "@/app/yogurt/actions";
 import { revalidatePath } from "next/cache";
+import ExportForm from "./ExportForm";
 
 export const metadata = {
   title: "Gestión de Pedidos — Admin",
@@ -43,9 +44,12 @@ export default async function AdminOrdersPage() {
             <h1 className="text-3xl font-bold">Pedidos</h1>
             <p className="text-stone-500">Gestión de pedidos y entregas</p>
           </div>
-          <div className="text-right">
-            <p className="text-sm text-stone-500">Ingresos totales</p>
-            <p className="text-2xl font-bold text-emerald-700">€{revenue.toFixed(2)}</p>
+          <div className="flex items-center gap-4">
+            <ExportForm />
+            <div className="text-right">
+              <p className="text-sm text-stone-500">Ingresos totales</p>
+              <p className="text-2xl font-bold text-emerald-700">€{revenue.toFixed(2)}</p>
+            </div>
           </div>
         </div>
 
