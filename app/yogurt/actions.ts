@@ -137,6 +137,72 @@ export async function getAllOrders() {
   });
 }
 
+/* ─────────────── Subscription management ─────────────── */
+
+export async function getSubscriptionsByPhone(phone: string) {
+  const clean = phone.replace(/\D/g, "");
+  return db.yogurtSubscription.findMany({
+    where: {
+      lead: {
+        OR: [{ phone: { contains: clean } }, { phone: { contains: phone } }],
+      },
+    },
+    include: { lead: true },
+    orderBy: { createdAt: "desc" },
+  });
+}
+
+export async function getAllSubscriptions() {
+  return db.yogurtSubscription.findMany({
+    include: { lead: true },
+    orderBy: { nextDelivery: "asc" },
+  });
+}
+
+export async function cancelSubscription(subscriptionId: string) {
+  const sub = await db.yogurtSubscription.findUnique({
+    where: { id: subscriptionId },
+  });
+  if (!sub) return { ok: false, error: "Not found" };
+
+  // Cancel in Stripe
+  try {
+    await stripe.subscriptions.cancel(sub.stripeSubscriptionId);
+  } catch {
+    // may already be cancelled
+  }
+
+  await db.yogurtSubscription.update({
+    where: { id: subscriptionId },
+    data: { status: "cancelled" },
+  });
+
+  revalidatePath("/admin/subscriptions");
+  revalidatePath("/yogurt/subscriptions");
+  return { ok: true };
+}
+
+export async function createPortalSession(formData: FormData) {
+  const subscriptionId = formData.get("subscriptionId") as string;
+  const sub = await db.yogurtSubscription.findUnique({
+    where: { id: subscriptionId },
+  });
+  if (!sub?.stripeCustomerId) {
+    throw new Error("No Stripe customer found");
+  }
+
+  const portalSession = await stripe.billingPortal.sessions.create({
+    customer: sub.stripeCustomerId,
+    return_url: `${BASE_URL}/yogurt/subscriptions`,
+  });
+
+  if (!portalSession.url) {
+    throw new Error("No portal URL generated");
+  }
+
+  redirect(portalSession.url);
+}
+
 /* ─────────────── Legacy lead actions ─────────────── */
 
 export async function getYogurtLeads() {

@@ -148,6 +148,7 @@ export default async function YogurtSuccessPage({
           data: {
             leadId: lead.id,
             stripeSubscriptionId: sub.id,
+            stripeCustomerId: (session.customer as string) || null,
             status: "active",
             frequency: "weekly",
             nextDelivery,

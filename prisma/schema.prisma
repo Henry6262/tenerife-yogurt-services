@@ -194,6 +194,7 @@ model YogurtSubscription {
   leadId    String   @unique
   lead      YogurtLead @relation(fields: [leadId], references: [id], onDelete: Cascade)
   stripeSubscriptionId String @unique
+  stripeCustomerId String?
   status    String   @default("active") // active, paused, cancelled
   frequency String   @default("weekly") // weekly, biweekly
   nextDelivery DateTime?
