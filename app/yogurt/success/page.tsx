@@ -2,6 +2,7 @@ import { redirect } from "next/navigation";
 import { stripe } from "@/lib/stripe";
 import { db } from "@/lib/db";
 import { sendWhatsAppMessage, TEMPLATES, sendAdminOrderNotification } from "@/lib/whatsapp";
+import { sendOrderConfirmationEmail } from "@/lib/email";
 import type Stripe from "stripe";
 
 export const metadata = {
@@ -126,9 +127,22 @@ export default async function YogurtSuccessPage({
             customerName: order.customerName,
             customerPhone: order.customerPhone,
             address: order.address || undefined,
+            deliveryTimeSlot: order.deliveryTimeSlot || undefined,
             items: order.items.map((i) => ({ productName: i.productName, quantity: i.quantity })),
             total: order.total,
           });
+          // Send email receipt
+          if (order.customerEmail) {
+            await sendOrderConfirmationEmail({
+              to: order.customerEmail,
+              customerName: order.customerName,
+              orderId: order.id,
+              items: order.items.map((i) => ({ name: i.productName, quantity: i.quantity, price: i.unitPrice })),
+              total: order.total,
+              deliveryTimeSlot: order.deliveryTimeSlot,
+              address: order.address,
+            });
+          }
         }
       } else if (product_id && typeof product_id === "string") {
         const product = await db.product.findUnique({ where: { id: product_id } });
@@ -170,9 +184,22 @@ export default async function YogurtSuccessPage({
               customerName: order.customerName,
               customerPhone: order.customerPhone,
               address: order.address || undefined,
+              deliveryTimeSlot: order.deliveryTimeSlot || undefined,
               items: order.items.map((i) => ({ productName: i.productName, quantity: i.quantity })),
               total: order.total,
             });
+            // Send email receipt
+            if (order.customerEmail) {
+              await sendOrderConfirmationEmail({
+                to: order.customerEmail,
+                customerName: order.customerName,
+                orderId: order.id,
+                items: order.items.map((i) => ({ name: i.productName, quantity: i.quantity, price: i.unitPrice })),
+                total: order.total,
+                deliveryTimeSlot: order.deliveryTimeSlot,
+                address: order.address,
+              });
+            }
           }
         }
       }
