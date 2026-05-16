@@ -1,7 +1,7 @@
 import { redirect } from "next/navigation";
 import { stripe } from "@/lib/stripe";
 import { db } from "@/lib/db";
-import { sendWhatsAppMessage, TEMPLATES } from "@/lib/whatsapp";
+import { sendWhatsAppMessage, TEMPLATES, sendAdminOrderNotification } from "@/lib/whatsapp";
 import type Stripe from "stripe";
 
 export const metadata = {
@@ -117,6 +117,17 @@ export default async function YogurtSuccessPage({
             // ignore stock errors
           }
         }
+        // Notify admin
+        if (order) {
+          await sendAdminOrderNotification({
+            id: order.id,
+            customerName: order.customerName,
+            customerPhone: order.customerPhone,
+            address: order.address || undefined,
+            items: order.items.map((i) => ({ productName: i.productName, quantity: i.quantity })),
+            total: order.total,
+          });
+        }
       } else if (product_id && typeof product_id === "string") {
         const product = await db.product.findUnique({ where: { id: product_id } });
         if (product) {
@@ -149,6 +160,17 @@ export default async function YogurtSuccessPage({
             where: { id: product.id },
             data: { stock: { decrement: 1 } },
           });
+          // Notify admin
+          if (order) {
+            await sendAdminOrderNotification({
+              id: order.id,
+              customerName: order.customerName,
+              customerPhone: order.customerPhone,
+              address: order.address || undefined,
+              items: order.items.map((i) => ({ productName: i.productName, quantity: i.quantity })),
+              total: order.total,
+            });
+          }
         }
       }
     } else {

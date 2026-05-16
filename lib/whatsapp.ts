@@ -50,6 +50,26 @@ export function generateWhatsAppLink(phone: string, message: string): string {
   return `https://wa.me/${cleanPhone}?text=${encoded}`;
 }
 
+export async function sendAdminOrderNotification(order: {
+  id: string;
+  customerName: string;
+  customerPhone: string;
+  address?: string;
+  items: { productName: string; quantity: number }[];
+  total: number;
+}): Promise<void> {
+  const ADMIN_PHONE = process.env.ADMIN_WHATSAPP_PHONE;
+  if (!ADMIN_PHONE) {
+    console.warn("ADMIN_WHATSAPP_PHONE not set. Skipping admin notification.");
+    return;
+  }
+
+  const itemsText = order.items.map((i) => `${i.quantity}x ${i.productName}`).join("\n");
+  const message = `🛒 *Nuevo pedido* #${order.id.slice(0, 8)}\n\n*Cliente:* ${order.customerName}\n*Tel:* ${order.customerPhone}\n*Dirección:* ${order.address || "—"}\n\n*Productos:*\n${itemsText}\n\n*Total:* €${order.total.toFixed(2)}`;
+
+  await sendWhatsAppMessage(ADMIN_PHONE, message);
+}
+
 export const TEMPLATES = {
   orderConfirmation: (name: string) =>
     `¡Hola ${name}! ✅ Tu pago del pack de Yogurt Griego Artesanal se ha confirmado. \n\nTe entregamos mañana entre 10:00 y 14:00 en Santa Cruz / La Laguna. \n\nSi necesitas cambiar la dirección o el horario, responde aquí.`,
