@@ -55,6 +55,7 @@ export async function sendAdminOrderNotification(order: {
   customerName: string;
   customerPhone: string;
   address?: string;
+  deliveryTimeSlot?: string;
   items: { productName: string; quantity: number }[];
   total: number;
 }): Promise<void> {
@@ -65,7 +66,8 @@ export async function sendAdminOrderNotification(order: {
   }
 
   const itemsText = order.items.map((i) => `${i.quantity}x ${i.productName}`).join("\n");
-  const message = `🛒 *Nuevo pedido* #${order.id.slice(0, 8)}\n\n*Cliente:* ${order.customerName}\n*Tel:* ${order.customerPhone}\n*Dirección:* ${order.address || "—"}\n\n*Productos:*\n${itemsText}\n\n*Total:* €${order.total.toFixed(2)}`;
+  const timeText = order.deliveryTimeSlot ? `\n🕐 *Horario:* ${order.deliveryTimeSlot}` : "";
+  const message = `🛒 *Nuevo pedido* #${order.id.slice(0, 8)}${timeText}\n\n*Cliente:* ${order.customerName}\n*Tel:* ${order.customerPhone}\n*Dirección:* ${order.address || "—"}\n\n*Productos:*\n${itemsText}\n\n*Total:* €${order.total.toFixed(2)}`;
 
   await sendWhatsAppMessage(ADMIN_PHONE, message);
 }

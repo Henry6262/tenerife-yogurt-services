@@ -58,6 +58,7 @@ export default async function YogurtSuccessPage({
   }
 
   const isCart = cartItems.length > 0;
+  const timeSlot = meta.timeSlot;
 
   // Track promo code usage
   if (meta.promoCode) {
@@ -94,6 +95,7 @@ export default async function YogurtSuccessPage({
             stripePaymentIntentId: (session.payment_intent as string) || null,
             total,
             notes: "Pedido desde carrito",
+            deliveryTimeSlot: timeSlot || null,
             items: {
               create: cartItems.map((item) => ({
                 productId: item.productId,
@@ -143,6 +145,7 @@ export default async function YogurtSuccessPage({
               stripePaymentIntentId: (session.payment_intent as string) || null,
               total: product.price,
               notes: isSubscription ? "Suscripción semanal" : "Pedido único",
+              deliveryTimeSlot: timeSlot || null,
               items: {
                 create: {
                   productId: product.id,

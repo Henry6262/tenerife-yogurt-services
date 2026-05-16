@@ -4,12 +4,20 @@ import { useCart } from "@/lib/cart";
 import { useState } from "react";
 import { checkoutCart } from "../actions";
 
+const TIME_SLOTS = [
+  { value: "10:00-11:00", label: "10:00 – 11:00" },
+  { value: "11:00-12:00", label: "11:00 – 12:00" },
+  { value: "12:00-13:00", label: "12:00 – 13:00" },
+  { value: "13:00-14:00", label: "13:00 – 14:00" },
+];
+
 export default function CartPage() {
   const { items, removeItem, updateQuantity, totalItems, subtotal, discount, totalPrice, clearCart, promo, setPromo } = useCart();
   const [checkingOut, setCheckingOut] = useState(false);
   const [promoInput, setPromoInput] = useState("");
   const [promoError, setPromoError] = useState("");
   const [promoLoading, setPromoLoading] = useState(false);
+  const [timeSlot, setTimeSlot] = useState("");
 
   async function handleCheckout() {
     if (items.length === 0) return;
@@ -18,6 +26,7 @@ export default function CartPage() {
       const formData = new FormData();
       formData.append("items", JSON.stringify(items));
       if (promo) formData.append("promoCode", promo.code);
+      if (timeSlot) formData.append("timeSlot", timeSlot);
       await checkoutCart(formData);
     } catch (err) {
       console.error(err);
@@ -117,6 +126,32 @@ export default function CartPage() {
               ))}
             </div>
 
+            {/* Delivery time slot */}
+            <div className="rounded-2xl border border-stone-200 bg-white p-4 mb-4">
+              <label className="block text-sm font-medium text-stone-700 mb-2">
+                ¿Cuándo quieres recibirlo? <span className="text-red-500">*</span>
+              </label>
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                {TIME_SLOTS.map((slot) => (
+                  <button
+                    key={slot.value}
+                    type="button"
+                    onClick={() => setTimeSlot(slot.value)}
+                    className={`rounded-lg border px-3 py-2 text-sm font-medium transition ${
+                      timeSlot === slot.value
+                        ? "border-emerald-500 bg-emerald-50 text-emerald-700"
+                        : "border-stone-200 bg-white text-stone-600 hover:bg-stone-50"
+                    }`}
+                  >
+                    {slot.label}
+                  </button>
+                ))}
+              </div>
+              {!timeSlot && (
+                <p className="mt-2 text-xs text-amber-600">Selecciona una franja horaria para continuar</p>
+              )}
+            </div>
+
             {/* Promo code */}
             <div className="rounded-2xl border border-stone-200 bg-white p-4 mb-4">
               <label className="block text-sm font-medium text-stone-700 mb-2">
@@ -181,7 +216,7 @@ export default function CartPage() {
             <div className="flex gap-3">
               <button
                 onClick={handleCheckout}
-                disabled={checkingOut}
+                disabled={checkingOut || !timeSlot}
                 className="flex-1 rounded-xl bg-emerald-600 py-3.5 font-bold text-white hover:bg-emerald-700 transition disabled:opacity-50"
               >
                 {checkingOut ? "Redirigiendo a Stripe..." : "Pagar con Stripe"}

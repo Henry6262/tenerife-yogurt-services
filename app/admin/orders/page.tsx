@@ -94,6 +94,9 @@ export default async function AdminOrdersPage() {
                             {item.productName} × {item.quantity}
                           </p>
                         ))}
+                        {order.deliveryTimeSlot && (
+                          <p className="text-xs text-emerald-600 mt-1">🕐 {order.deliveryTimeSlot}</p>
+                        )}
                       </td>
                       <td className="px-4 py-3 font-semibold text-emerald-700">€{order.total.toFixed(2)}</td>
                       <td className="px-4 py-3 text-xs text-stone-500">

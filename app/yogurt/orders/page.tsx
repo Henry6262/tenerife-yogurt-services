@@ -105,8 +105,13 @@ export default function OrderTrackingPage() {
                   <span className="text-lg font-bold text-emerald-700">€{order.total.toFixed(2)}</span>
                 </div>
 
+                {order.deliveryTimeSlot && (
+                  <p className="mt-2 text-xs text-emerald-600">
+                    🕐 Entrega: {order.deliveryTimeSlot}
+                  </p>
+                )}
                 {order.address && (
-                  <p className="mt-3 text-xs text-stone-400">
+                  <p className="mt-1 text-xs text-stone-400">
                     📍 {order.address}
                   </p>
                 )}

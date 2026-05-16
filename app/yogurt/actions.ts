@@ -46,6 +46,7 @@ export async function checkoutCart(formData: FormData) {
   const items: { productId: string; name: string; price: number; quantity: number }[] =
     JSON.parse(itemsJson);
   const promoCode = formData.get("promoCode") as string;
+  const timeSlot = formData.get("timeSlot") as string;
 
   const lineItems = items.map((item) => ({
     price_data: {
@@ -78,6 +79,10 @@ export async function checkoutCart(formData: FormData) {
       sessionConfig.discounts = [{ coupon: promo.stripeCouponId }];
       metadata.promoCode = promo.code;
     }
+  }
+
+  if (timeSlot) {
+    metadata.timeSlot = timeSlot;
   }
 
   const session = await stripe.checkout.sessions.create(sessionConfig);
