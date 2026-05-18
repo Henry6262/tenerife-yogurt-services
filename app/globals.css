@@ -28,6 +28,10 @@
     --radius: 0.75rem;
   }
 
+  html {
+    scroll-behavior: smooth;
+  }
+
   body {
     @apply bg-white text-slate-900 antialiased;
     font-family: "Inter", system-ui, sans-serif;
