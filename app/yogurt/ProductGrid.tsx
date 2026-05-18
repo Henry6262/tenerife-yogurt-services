@@ -1,6 +1,7 @@
 "use client";
 
 import { useCart } from "@/lib/cart";
+import { ProductImage } from "@/components/animations/product-image";
 
 interface Product {
   id: string;
@@ -8,6 +9,7 @@ interface Product {
   description: string | null;
   price: number;
   comparePrice: number | null;
+  imageUrl: string | null;
   isSubscription: boolean;
   isBundle: boolean;
   stock: number;
@@ -31,9 +33,11 @@ export default function ProductGrid({ products }: { products: Product[] }) {
               outOfStock ? "opacity-60" : ""
             }`}
           >
-            <div className="mb-4 aspect-square rounded-xl bg-stone-100 flex items-center justify-center">
-              <span className="text-4xl">🥛</span>
-            </div>
+            <ProductImage
+              name={product.name}
+              imageUrl={product.imageUrl}
+              className="mb-4 aspect-square rounded-xl"
+            />
 
             {product.isSubscription && (
               <span className="mb-2 inline-block self-start rounded-full bg-purple-100 px-2.5 py-0.5 text-xs font-semibold text-purple-700">

@@ -1,6 +1,6 @@
 "use client";
 
-import { forwardRef, useMemo } from "react";
+import { forwardRef, useEffect, useState } from "react";
 import { cn } from "@/lib/utils";
 
 export interface ParticlesProps {
@@ -12,21 +12,42 @@ export interface ParticlesProps {
   connect?: boolean;
 }
 
+interface Particle {
+  x: number;
+  y: number;
+  size: number;
+  opacity: number;
+  animDuration: number;
+  animDelay: number;
+}
+
+function generateParticles(count: number, speed: number, size: number): Particle[] {
+  return Array.from({ length: count }, () => ({
+    x: Math.random() * 100,
+    y: Math.random() * 100,
+    size: Math.random() * size + 0.5,
+    opacity: Math.random() * 0.5 + 0.2,
+    animDuration: 3 + Math.random() * 4,
+    animDelay: Math.random() * 3,
+  }));
+}
+
 export const Particles = forwardRef<HTMLDivElement, ParticlesProps>(
   (
     { color = "#ffffff", count = 80, speed = 1, size = 2, className, connect = true },
     ref
   ) => {
-    const particles = useMemo(() => {
-      return Array.from({ length: count }, () => ({
-        x: Math.random() * 100,
-        y: Math.random() * 100,
-        vx: (Math.random() - 0.5) * 0.3 * speed,
-        vy: (Math.random() - 0.5) * 0.3 * speed,
-        size: Math.random() * size + 0.5,
-        opacity: Math.random() * 0.5 + 0.2,
-      }));
+    const [particles, setParticles] = useState<Particle[]>([]);
+    const [mounted, setMounted] = useState(false);
+
+    useEffect(() => {
+      setMounted(true);
+      setParticles(generateParticles(count, speed, size));
     }, [count, speed, size]);
+
+    if (!mounted) {
+      return <div ref={ref} className={cn("absolute inset-0 overflow-hidden", className)} />;
+    }
 
     return (
       <div ref={ref} className={cn("absolute inset-0 overflow-hidden", className)}>
@@ -41,8 +62,8 @@ export const Particles = forwardRef<HTMLDivElement, ParticlesProps>(
               top: `${p.y}%`,
               background: color,
               opacity: p.opacity,
-              animation: `particleFloat ${3 + Math.random() * 4}s ease-in-out infinite`,
-              animationDelay: `${Math.random() * 3}s`,
+              animation: `particleFloat ${p.animDuration}s ease-in-out infinite`,
+              animationDelay: `${p.animDelay}s`,
             }}
           />
         ))}

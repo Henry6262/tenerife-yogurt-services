@@ -119,8 +119,8 @@ export function AIChat() {
             <div
               className={`max-w-[85%] rounded-2xl px-4 py-3 ${
                 msg.role === "user"
-                  ? "bg-rose-600 text-white rounded-br-md"
-                  : "bg-white border border-gray-200 text-gray-800 rounded-bl-md"
+                  ? "bg-violet-600 text-white rounded-br-md shadow-lg shadow-violet-600/20"
+                  : "bg-white/10 backdrop-blur-md border border-white/10 text-slate-100 rounded-bl-md"
               }`}
             >
               <p className="text-sm leading-relaxed">{msg.text}</p>
@@ -131,34 +131,31 @@ export function AIChat() {
                   {msg.options.map((opt) => (
                     <div
                       key={opt.id}
-                      className="bg-gray-50 rounded-xl p-3 border border-gray-100"
+                      className="bg-slate-900/60 backdrop-blur-sm rounded-xl p-3 border border-white/10"
                     >
                       <div className="flex items-center justify-between mb-2">
                         <div className="flex items-center gap-2">
-                          <div
-                            className="w-8 h-8 rounded-lg flex items-center justify-center text-white text-xs font-bold"
-                            style={{ backgroundColor: "#f43f5e" }}
-                          >
+                          <div className="w-8 h-8 rounded-lg flex items-center justify-center text-white text-xs font-bold bg-violet-500">
                             <Scissors className="w-4 h-4" />
                           </div>
                           <div>
-                            <div className="text-sm font-semibold text-gray-900">
+                            <div className="text-sm font-semibold text-white">
                               {opt.serviceName}
                             </div>
-                            <div className="text-xs text-gray-500">
+                            <div className="text-xs text-slate-400">
                               {opt.serviceDuration} min · {opt.servicePrice}€
                             </div>
                           </div>
                         </div>
                         <div className="text-right">
-                          <div className="text-lg font-bold text-rose-600">
+                          <div className="text-lg font-bold text-violet-400">
                             {opt.displayTime}
                           </div>
-                          <div className="text-xs text-gray-400">{opt.displayDate}</div>
+                          <div className="text-xs text-slate-500">{opt.displayDate}</div>
                         </div>
                       </div>
 
-                      <div className="flex items-center gap-3 text-xs text-gray-500 mb-3">
+                      <div className="flex items-center gap-3 text-xs text-slate-400 mb-3">
                         <span className="flex items-center gap-1">
                           <User className="w-3 h-3" /> {opt.staffName}
                         </span>
@@ -168,13 +165,13 @@ export function AIChat() {
                       </div>
 
                       {bookingDone === opt.id ? (
-                        <div className="flex items-center gap-2 text-green-600 text-sm font-medium">
+                        <div className="flex items-center gap-2 text-green-400 text-sm font-medium">
                           <CheckCircle className="w-4 h-4" /> Reservado
                         </div>
                       ) : (
                         <button
                           onClick={() => handleBook(opt)}
-                          className="w-full py-2 bg-rose-600 text-white rounded-lg text-sm font-semibold hover:bg-rose-700 transition"
+                          className="w-full py-2 bg-violet-600 text-white rounded-lg text-sm font-semibold hover:bg-violet-500 transition shadow-lg shadow-violet-600/20"
                         >
                           Reservar esta cita
                         </button>
@@ -189,8 +186,8 @@ export function AIChat() {
 
         {isThinking && (
           <div className="flex justify-start">
-            <div className="bg-white border border-gray-200 rounded-2xl rounded-bl-md px-4 py-3">
-              <div className="flex items-center gap-2 text-gray-400 text-sm">
+            <div className="bg-white/10 backdrop-blur-md border border-white/10 rounded-2xl rounded-bl-md px-4 py-3">
+              <div className="flex items-center gap-2 text-slate-400 text-sm">
                 <Loader2 className="w-4 h-4 animate-spin" />
                 Buscando los mejores horarios...
               </div>
@@ -202,14 +199,14 @@ export function AIChat() {
       </div>
 
       {/* Input area */}
-      <div className="border-t border-gray-200 bg-white px-4 py-3">
+      <div className="border-t border-white/10 bg-slate-900/50 backdrop-blur-md px-4 py-3">
         <div className="flex items-center gap-2 max-w-2xl mx-auto">
           <button
             onClick={toggleVoice}
             className={`w-12 h-12 rounded-full flex items-center justify-center transition ${
               isListening
                 ? "bg-red-500 text-white animate-pulse"
-                : "bg-gray-100 text-gray-600 hover:bg-gray-200"
+                : "bg-white/10 text-slate-300 hover:bg-white/20"
             }`}
             title={isListening ? "Detener" : "Hablar"}
           >
@@ -222,13 +219,13 @@ export function AIChat() {
             onChange={(e) => setInput(e.target.value)}
             onKeyDown={(e) => e.key === "Enter" && handleSend(input)}
             placeholder={isListening ? "Escuchando..." : "Escribe o habla..."}
-            className="flex-1 px-4 py-3 bg-gray-100 rounded-full text-sm focus:outline-none focus:ring-2 focus:ring-rose-500"
+            className="flex-1 px-4 py-3 bg-white/10 border border-white/10 rounded-full text-sm text-white placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-violet-500"
           />
 
           <button
             onClick={() => handleSend(input)}
             disabled={!input.trim()}
-            className="w-12 h-12 rounded-full bg-rose-600 text-white flex items-center justify-center hover:bg-rose-700 transition disabled:opacity-40"
+            className="w-12 h-12 rounded-full bg-violet-600 text-white flex items-center justify-center hover:bg-violet-500 transition disabled:opacity-40 shadow-lg shadow-violet-600/20"
           >
             <Send className="w-5 h-5" />
           </button>
@@ -245,7 +242,7 @@ export function AIChat() {
             <button
               key={prompt}
               onClick={() => handleSend(prompt)}
-              className="px-3 py-1.5 bg-gray-100 text-gray-600 rounded-full text-xs whitespace-nowrap hover:bg-gray-200 transition"
+              className="px-3 py-1.5 bg-white/10 text-slate-300 rounded-full text-xs whitespace-nowrap hover:bg-white/20 transition border border-white/5"
             >
               {prompt}
             </button>
