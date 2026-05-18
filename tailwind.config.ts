@@ -37,12 +37,14 @@ const config: Config = {
         "fade-in": "fadeIn 0.6s ease-out forwards",
         "fade-in-up": "fadeInUp 0.6s ease-out forwards",
         "slide-up": "slideUp 0.5s ease-out forwards",
-        "aurora": "aurora 8s ease-in-out infinite alternate",
-        "float": "float 6s ease-in-out infinite",
+        aurora: "aurora 8s ease-in-out infinite alternate",
+        float: "float 6s ease-in-out infinite",
         "pulse-slow": "pulse 4s cubic-bezier(0.4, 0, 0.6, 1) infinite",
-        "marquee": "marquee 25s linear infinite",
+        marquee: "marquee 25s linear infinite",
         "marquee-reverse": "marquee-reverse 25s linear infinite",
         "border-beam": "borderBeam 3s linear infinite",
+        "star-movement-top": "star-movement-top linear infinite alternate",
+        "star-movement-bottom": "star-movement-bottom linear infinite alternate",
       },
       keyframes: {
         fadeIn: {
@@ -78,6 +80,14 @@ const config: Config = {
         borderBeam: {
           "0%": { backgroundPosition: "0% 50%" },
           "100%": { backgroundPosition: "200% 50%" },
+        },
+        "star-movement-top": {
+          "0%": { transform: "translate(0%, 0%)", opacity: "1" },
+          "100%": { transform: "translate(100%, 0%)", opacity: "0" },
+        },
+        "star-movement-bottom": {
+          "0%": { transform: "translate(0%, 0%)", opacity: "1" },
+          "100%": { transform: "translate(-100%, 0%)", opacity: "0" },
         },
       },
     },

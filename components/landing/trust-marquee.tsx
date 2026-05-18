@@ -1,7 +1,7 @@
 "use client";
 
 import { Marquee } from "@/components/animations/marquee";
-import { ScrollReveal } from "@/components/animations/scroll-reveal";
+import AnimatedContent from "@/components/react-bits/animated-content";
 
 const categories = [
   "Peluquería",
@@ -21,13 +21,13 @@ const categories = [
 export function TrustMarquee() {
   return (
     <section className="py-12 border-y border-slate-100 bg-slate-50/50 overflow-hidden">
-      <ScrollReveal>
+      <AnimatedContent>
         <div className="mb-6 text-center">
           <p className="text-xs font-semibold text-slate-400 uppercase tracking-[0.2em]">
             Servicios disponibles
           </p>
         </div>
-      </ScrollReveal>
+      </AnimatedContent>
       <Marquee pauseOnHover speed="slow">
         {categories.map((cat) => (
           <div

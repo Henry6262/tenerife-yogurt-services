@@ -1,7 +1,7 @@
 "use client";
 
 import { Mic, Search, CalendarCheck } from "lucide-react";
-import { ScrollReveal } from "@/components/animations/scroll-reveal";
+import AnimatedContent from "@/components/react-bits/animated-content";
 import { DotGrid } from "@/components/animations/dot-grid";
 
 const steps = [
@@ -44,7 +44,7 @@ export function HowItWorks() {
       />
 
       <div className="relative z-10 max-w-5xl mx-auto px-4">
-        <ScrollReveal className="text-center mb-16">
+        <AnimatedContent className="text-center mb-16" distance={50}>
           <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-blue-50 border border-blue-100 text-blue-700 text-sm font-medium mb-4">
             <CalendarCheck className="h-4 w-4" />
             Cómo funciona
@@ -55,11 +55,11 @@ export function HowItWorks() {
           <p className="text-lg text-slate-500 max-w-xl mx-auto">
             Tres pasos. Cero llamadas. Tu cita reservada en menos de un minuto.
           </p>
-        </ScrollReveal>
+        </AnimatedContent>
 
         <div className="grid md:grid-cols-3 gap-6">
           {steps.map((step, i) => (
-            <ScrollReveal key={step.title} delay={i * 0.15}>
+            <AnimatedContent key={step.title} delay={i * 0.15} distance={60}>
               <div className="relative glass-card p-8 text-center h-full group hover:-translate-y-1.5 transition-all duration-500 hover:shadow-[0_20px_50px_rgba(37,99,235,0.12)]">
                 {/* Gradient glow on hover */}
                 <div
@@ -84,7 +84,7 @@ export function HowItWorks() {
                   <p className="text-sm text-slate-500 leading-relaxed">{step.description}</p>
                 </div>
               </div>
-            </ScrollReveal>
+            </AnimatedContent>
           ))}
         </div>
       </div>

@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { MapPin, Phone, ArrowRight, ExternalLink } from "lucide-react";
-import { ScrollReveal } from "@/components/animations/scroll-reveal";
+import AnimatedContent from "@/components/react-bits/animated-content";
 import { SpotlightCard } from "@/components/animations/spotlight-card";
 import { DotGrid } from "@/components/animations/dot-grid";
 
@@ -33,18 +33,18 @@ export function BusinessesShowcase({ businesses }: BusinessesShowcaseProps) {
       />
 
       <div className="relative z-10 max-w-5xl mx-auto px-4">
-        <ScrollReveal className="text-center mb-16">
+        <AnimatedContent className="text-center mb-16" distance={50}>
           <h2 className="text-4xl font-extrabold tracking-tight text-slate-900 mb-4">
             Negocios <span className="text-gradient-blue">destacados</span>
           </h2>
           <p className="text-lg text-slate-500 max-w-xl mx-auto">
             Salones, barberías y spas que ya usan nuestra IA para atender a sus clientes.
           </p>
-        </ScrollReveal>
+        </AnimatedContent>
 
         <div className="grid md:grid-cols-2 gap-6">
           {businesses.map((biz, i) => (
-            <ScrollReveal key={biz.id} delay={i * 0.1}>
+            <AnimatedContent key={biz.id} delay={i * 0.1} distance={60}>
               <SpotlightCard className="h-full group transition-all duration-300 hover:-translate-y-0.5">
                 <div className="p-6">
                   <div className="flex items-start justify-between mb-3">
@@ -111,7 +111,7 @@ export function BusinessesShowcase({ businesses }: BusinessesShowcaseProps) {
                   </div>
                 </div>
               </SpotlightCard>
-            </ScrollReveal>
+            </AnimatedContent>
           ))}
         </div>
       </div>

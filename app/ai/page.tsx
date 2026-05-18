@@ -1,27 +1,17 @@
 import { AIChat } from "@/components/ai-chat";
-import { GradientMesh } from "@/components/animations/gradient-mesh";
-import { DotGrid } from "@/components/animations/dot-grid";
+import Aurora from "@/components/react-bits/aurora";
 
 export default function AIPage() {
   return (
     <div className="relative min-h-screen bg-slate-950 overflow-hidden">
-      {/* Animated mesh gradient background — AI theme */}
-      <GradientMesh
-        colors={["#8b5cf6", "#ec4899", "#3b82f6"]}
-        speed={0.6}
-        blur={120}
-        noiseOpacity={0.01}
-        baseColor="#0f172a"
-      />
-
-      {/* Subtle dot grid overlay */}
-      <DotGrid
-        color="rgba(255,255,255,0.06)"
-        spacing={60}
-        size={1}
-        animated={true}
-        className="opacity-40"
-      />
+      {/* React Bits Aurora background */}
+      <div className="absolute inset-0">
+        <Aurora
+          colorStops={["#8b5cf6", "#ec4899", "#3b82f6"]}
+          amplitude={1.2}
+          blend={0.6}
+        />
+      </div>
 
       {/* Vignette */}
       <div className="absolute inset-0 bg-radial-gradient from-transparent via-transparent to-slate-950/70 pointer-events-none" />

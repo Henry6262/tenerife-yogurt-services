@@ -3,31 +3,22 @@
 import Link from "next/link";
 import { ArrowRight, MessageCircle, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { GradientMesh } from "@/components/animations/gradient-mesh";
-import { BlurText } from "@/components/animations/blur-text";
-import { Particles } from "@/components/animations/particles";
-import { TextType } from "@/components/animations/text-type";
+import Threads from "@/components/react-bits/threads";
+import BlurText from "@/components/react-bits/blur-text";
+import ShinyText from "@/components/react-bits/shiny-text";
 
 export function Hero() {
   return (
-    <section className="relative min-h-screen flex items-center justify-center overflow-hidden bg-slate-900">
-      {/* Animated gradient mesh background */}
-      <GradientMesh
-        colors={["#2563eb", "#0891b2", "#6366f1"]}
-        speed={0.8}
-        blur={100}
-        noiseOpacity={0.015}
-      />
-
-      {/* Floating particles overlay */}
-      <Particles
-        color="rgba(255,255,255,0.35)"
-        count={60}
-        speed={0.8}
-        size={2.5}
-        connect={true}
-        className="opacity-40"
-      />
+    <section className="relative min-h-screen flex items-center justify-center overflow-hidden bg-slate-950">
+      {/* React Bits Threads background */}
+      <div className="absolute inset-0">
+        <Threads
+          color={[0.35, 0.55, 1]}
+          amplitude={1.2}
+          distance={0.3}
+          enableMouseInteraction={true}
+        />
+      </div>
 
       {/* Subtle grid overlay */}
       <div
@@ -39,7 +30,7 @@ export function Hero() {
       />
 
       {/* Vignette */}
-      <div className="absolute inset-0 bg-radial-gradient from-transparent via-transparent to-slate-900/80" />
+      <div className="absolute inset-0 bg-radial-gradient from-transparent via-transparent to-slate-950/80 pointer-events-none" />
 
       <div className="relative z-10 max-w-4xl mx-auto px-4 text-center">
         {/* Badge */}
@@ -48,23 +39,37 @@ export function Hero() {
           La primera IA de reservas de Tenerife
         </div>
 
-        {/* Headline */}
+        {/* Headline with BlurText */}
         <h1 className="text-5xl sm:text-6xl md:text-7xl font-extrabold tracking-tight text-white mb-6 leading-[1.1]">
-          <BlurText text="Tu cita de belleza," delay={0.2} duration={0.8} />
+          <BlurText
+            text="Tu cita de belleza,"
+            delay={150}
+            className="justify-center"
+            animateBy="words"
+            direction="top"
+          />
           <br />
           <span className="bg-clip-text text-transparent bg-gradient-to-r from-blue-400 via-cyan-400 to-blue-300">
-            <BlurText text="sin llamadas" delay={0.6} duration={0.8} />
+            <BlurText
+              text="sin llamadas"
+              delay={300}
+              className="justify-center"
+              animateBy="words"
+              direction="top"
+            />
           </span>
         </h1>
 
-        {/* Subheadline with typewriter effect */}
-        <p className="text-lg sm:text-xl text-slate-400 max-w-2xl mx-auto mb-10 leading-relaxed h-14">
-          <TextType
+        {/* Subheadline with ShinyText */}
+        <div className="text-lg sm:text-xl text-slate-400 max-w-2xl mx-auto mb-10 leading-relaxed">
+          <ShinyText
             text="Cada negocio tiene su propia IA personalizada. Habla con ella, reserva tu cita, y olvídate de las llamadas perdidas para siempre."
-            speed={30}
-            cursor={false}
+            speed={3}
+            color="#94a3b8"
+            shineColor="#ffffff"
+            spread={90}
           />
-        </p>
+        </div>
 
         {/* CTAs */}
         <div className="flex flex-col sm:flex-row items-center justify-center gap-4">

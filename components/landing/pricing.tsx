@@ -2,7 +2,7 @@
 
 import { Check } from "lucide-react";
 import Link from "next/link";
-import { ScrollReveal } from "@/components/animations/scroll-reveal";
+import AnimatedContent from "@/components/react-bits/animated-content";
 
 const plans = [
   {
@@ -60,16 +60,16 @@ export function Pricing() {
   return (
     <section className="relative py-24 bg-slate-50 overflow-hidden">
       <div className="max-w-5xl mx-auto px-4">
-        <ScrollReveal className="text-center mb-12">
+        <AnimatedContent className="text-center mb-12" distance={50}>
           <h2 className="text-3xl font-bold text-slate-900 mb-3">Precios simples</h2>
           <p className="text-slate-500 max-w-lg mx-auto">
             Empieza gratis y escala cuando tu negocio crezca. Sin comisiones por reserva.
           </p>
-        </ScrollReveal>
+        </AnimatedContent>
 
         <div className="grid md:grid-cols-3 gap-6">
           {plans.map((plan, i) => (
-            <ScrollReveal key={plan.name} delay={i * 0.12}>
+            <AnimatedContent key={plan.name} delay={i * 0.12} distance={60}>
               <div
                 className={`relative rounded-2xl p-6 h-full transition-all duration-300 hover:-translate-y-1 ${
                   plan.highlighted
@@ -136,7 +136,7 @@ export function Pricing() {
                   </Link>
                 </div>
               </div>
-            </ScrollReveal>
+            </AnimatedContent>
           ))}
         </div>
       </div>

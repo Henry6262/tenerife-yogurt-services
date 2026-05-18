@@ -1,7 +1,7 @@
 "use client";
 
 import { Bot, Clock, Shield, Zap, TrendingUp, Users } from "lucide-react";
-import { ScrollReveal } from "@/components/animations/scroll-reveal";
+import AnimatedContent from "@/components/react-bits/animated-content";
 import { SpotlightCard } from "@/components/animations/spotlight-card";
 
 const features = [
@@ -53,21 +53,22 @@ export function Features() {
   return (
     <section className="relative py-24 overflow-hidden">
       <div className="max-w-5xl mx-auto px-4">
-        <ScrollReveal className="text-center mb-16">
+        <AnimatedContent className="text-center mb-16" distance={50}>
           <h2 className="text-4xl font-extrabold tracking-tight text-slate-900 mb-4">
             Todo lo que <span className="text-gradient-blue">necesitas</span>
           </h2>
           <p className="text-lg text-slate-500 max-w-xl mx-auto">
             Una plataforma completa para digitalizar tu negocio y nunca perder una cita.
           </p>
-        </ScrollReveal>
+        </AnimatedContent>
 
         <div className="grid md:grid-cols-3 gap-4">
           {features.map((feature, i) => (
-            <ScrollReveal
+            <AnimatedContent
               key={feature.title}
               delay={i * 0.1}
               className={feature.size === "large" ? "md:col-span-2" : ""}
+              distance={50}
             >
               <SpotlightCard
                 className="h-full group transition-all duration-300 hover:shadow-[0_8px_40px_rgba(37,99,235,0.1)]"
@@ -84,7 +85,7 @@ export function Features() {
                   <p className="text-sm text-slate-500 leading-relaxed">{feature.description}</p>
                 </div>
               </SpotlightCard>
-            </ScrollReveal>
+            </AnimatedContent>
           ))}
         </div>
       </div>

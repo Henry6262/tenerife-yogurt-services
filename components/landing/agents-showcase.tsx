@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { ArrowRight, Bot, MessageCircle } from "lucide-react";
-import { ScrollReveal } from "@/components/animations/scroll-reveal";
+import AnimatedContent from "@/components/react-bits/animated-content";
 import { SpotlightCard } from "@/components/animations/spotlight-card";
 
 interface Agent {
@@ -22,7 +22,7 @@ export function AgentsShowcase({ agents }: AgentsShowcaseProps) {
   return (
     <section className="relative py-24 overflow-hidden">
       <div className="max-w-5xl mx-auto px-4">
-        <ScrollReveal className="text-center mb-16">
+        <AnimatedContent className="text-center mb-16" distance={50}>
           <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-blue-50 border border-blue-100 text-blue-700 text-sm font-medium mb-4">
             <Bot className="h-4 w-4" />
             Agentes Inteligentes
@@ -33,11 +33,11 @@ export function AgentsShowcase({ agents }: AgentsShowcaseProps) {
           <p className="text-lg text-slate-500 max-w-xl mx-auto">
             Cada negocio tiene su propia personalidad. Habla con ellos y reserva al instante.
           </p>
-        </ScrollReveal>
+        </AnimatedContent>
 
         <div className="grid md:grid-cols-3 gap-6">
           {agents.map((agent, i) => (
-            <ScrollReveal key={agent.slug} delay={i * 0.15}>
+            <AnimatedContent key={agent.slug} delay={i * 0.15} distance={60}>
               <Link href={`/agent/${agent.slug}`}>
                 <SpotlightCard
                   className="h-full group cursor-pointer transition-all duration-300 hover:-translate-y-1"
@@ -86,7 +86,7 @@ export function AgentsShowcase({ agents }: AgentsShowcaseProps) {
                   </div>
                 </SpotlightCard>
               </Link>
-            </ScrollReveal>
+            </AnimatedContent>
           ))}
         </div>
       </div>
