@@ -2,6 +2,7 @@
 
 import { useState, useRef, useCallback } from "react";
 import { agentTalk, agentBook } from "./actions";
+import { BookingPayment } from "@/components/booking-payment";
 import { Mic, MicOff, Send, CheckCircle, User, Clock, MapPin, Loader2 } from "lucide-react";
 
 interface AgentMessage {
@@ -9,6 +10,7 @@ interface AgentMessage {
   role: "user" | "agent";
   text: string;
   options?: AgentOption[];
+  payment?: { clientSecret: string; amount: number };
 }
 
 interface AgentOption {
@@ -42,6 +44,15 @@ export function AgentChat({ businessSlug, businessName, agentName, primaryColor,
 
   const scrollToBottom = () => messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
 
+  const buildHistory = (msgs: AgentMessage[]) => {
+    const history: { role: "user" | "assistant"; content: string }[] = [];
+    for (const m of msgs) {
+      if (m.id === "welcome") continue;
+      history.push({ role: m.role === "user" ? "user" : "assistant", content: m.text });
+    }
+    return history;
+  };
+
   const handleSend = async (text: string) => {
     if (!text.trim()) return;
     setMessages((prev) => [...prev, { id: Date.now().toString(), role: "user", text }]);
@@ -49,7 +60,8 @@ export function AgentChat({ businessSlug, businessName, agentName, primaryColor,
     setIsThinking(true);
     scrollToBottom();
 
-    const result = await agentTalk(businessSlug, text);
+    const history = buildHistory([...messages, { id: Date.now().toString(), role: "user", text }]);
+    const result = await agentTalk(businessSlug, text, history);
 
     setMessages((prev) => [
       ...prev,
@@ -76,16 +88,22 @@ export function AgentChat({ businessSlug, businessName, agentName, primaryColor,
     if (!name) return;
     const phone = prompt(`¿Tu teléfono?`);
     if (!phone) return;
+    const email = prompt(`¿Tu email? (opcional)`);
 
-    const result = await agentBook(businessSlug, option.id, name, phone);
+    const result = await agentBook(businessSlug, option.id, name, phone, email || undefined);
     if (result.success) {
       setBookingDone((prev) => new Set(prev).add(option.id));
+      let text = `¡Perfecto, ${name}! Tu cita para ${option.serviceName.toLowerCase()} con ${option.staffName} el ${option.displayDate} a las ${option.displayTime} está confirmada.`;
+      if (result.paymentRequired && result.clientSecret) {
+        text += `\n\nPara garantizar tu cita, se requiere un depósito de ${result.depositAmount}€. Pulsa el botón de pago abajo ↓`;
+      }
       setMessages((prev) => [
         ...prev,
         {
           id: Date.now().toString(),
           role: "agent",
-          text: `¡Perfecto, ${name}! Tu cita para ${option.serviceName.toLowerCase()} con ${option.staffName} el ${option.displayDate} a las ${option.displayTime} está confirmada.`,
+          text,
+          payment: result.paymentRequired ? { clientSecret: result.clientSecret!, amount: result.depositAmount! } : undefined,
         },
       ]);
     }
@@ -159,6 +177,19 @@ export function AgentChat({ businessSlug, businessName, agentName, primaryColor,
                     </div>
                   ))}
                 </div>
+              )}
+
+              {msg.payment && (
+                <BookingPayment
+                  clientSecret={msg.payment.clientSecret}
+                  amount={msg.payment.amount}
+                  onSuccess={() => {
+                    setMessages((prev) => [
+                      ...prev,
+                      { id: Date.now().toString(), role: "agent", text: "¡Depósito recibido! Tu cita está 100% confirmada. Nos vemos pronto." },
+                    ]);
+                  }}
+                />
               )}
             </div>
           </div>

@@ -5,6 +5,8 @@ import { ArrowRight, MessageCircle, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { GradientMesh } from "@/components/animations/gradient-mesh";
 import { BlurText } from "@/components/animations/blur-text";
+import { Particles } from "@/components/animations/particles";
+import { TextType } from "@/components/animations/text-type";
 
 export function Hero() {
   return (
@@ -15,6 +17,16 @@ export function Hero() {
         speed={0.8}
         blur={100}
         noiseOpacity={0.015}
+      />
+
+      {/* Floating particles overlay */}
+      <Particles
+        color="rgba(255,255,255,0.35)"
+        count={60}
+        speed={0.8}
+        size={2.5}
+        connect={true}
+        className="opacity-40"
       />
 
       {/* Subtle grid overlay */}
@@ -45,21 +57,24 @@ export function Hero() {
           </span>
         </h1>
 
-        {/* Subheadline */}
-        <p className="text-lg sm:text-xl text-slate-400 max-w-2xl mx-auto mb-10 leading-relaxed">
-          Cada negocio tiene su propia IA personalizada. Habla con ella, reserva tu cita,
-          y olvídate de las llamadas perdidas para siempre.
+        {/* Subheadline with typewriter effect */}
+        <p className="text-lg sm:text-xl text-slate-400 max-w-2xl mx-auto mb-10 leading-relaxed h-14">
+          <TextType
+            text="Cada negocio tiene su propia IA personalizada. Habla con ella, reserva tu cita, y olvídate de las llamadas perdidas para siempre."
+            speed={30}
+            cursor={false}
+          />
         </p>
 
         {/* CTAs */}
         <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
-          <Button size="lg" className="rounded-full px-8 text-lg gap-2 bg-blue-600 hover:bg-blue-500 shadow-lg shadow-blue-600/25">
+          <Button size="lg" className="rounded-full px-8 text-lg gap-2 bg-blue-600 hover:bg-blue-500 shadow-lg shadow-blue-600/25 transition-all hover:shadow-blue-600/40 hover:scale-105">
             <Link href="/ai" className="flex items-center gap-2">
               <MessageCircle className="h-5 w-5" />
               Probar IA Concierge
             </Link>
           </Button>
-          <Button size="lg" variant="outline" className="rounded-full px-8 text-lg gap-2 border-white/20 text-white hover:bg-white/10 hover:text-white">
+          <Button size="lg" variant="outline" className="rounded-full px-8 text-lg gap-2 border-white/20 text-white hover:bg-white/10 hover:text-white transition-all hover:scale-105">
             <Link href="/admin/agent" className="flex items-center gap-2">
               Soy un negocio
               <ArrowRight className="h-5 w-5" />
@@ -67,15 +82,17 @@ export function Hero() {
           </Button>
         </div>
 
-        {/* Stats */}
+        {/* Stats with glow */}
         <div className="mt-16 grid grid-cols-3 gap-8 max-w-lg mx-auto">
           {[
-            { value: "3", label: "IA Activas" },
+            { value: "3+", label: "IA Activas" },
             { value: "24/7", label: "Disponible" },
             { value: "0€", label: "Con Kit Digital" },
           ].map((stat) => (
-            <div key={stat.label} className="text-center">
-              <div className="text-2xl sm:text-3xl font-bold text-white">{stat.value}</div>
+            <div key={stat.label} className="text-center group">
+              <div className="text-2xl sm:text-3xl font-bold text-white group-hover:text-blue-300 transition-colors duration-300 drop-shadow-[0_0_8px_rgba(147,197,253,0.3)]">
+                {stat.value}
+              </div>
               <div className="text-xs sm:text-sm text-slate-500 mt-1">{stat.label}</div>
             </div>
           ))}

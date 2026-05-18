@@ -27,6 +27,7 @@ export function Footer() {
             <ul className="space-y-2 text-sm text-slate-500">
               <li><Link href="/ai" className="hover:text-blue-600 transition">IA Concierge</Link></li>
               <li><Link href="/book" className="hover:text-blue-600 transition">Reservas</Link></li>
+              <li><Link href="/bookings" className="hover:text-blue-600 transition">Mis Citas</Link></li>
               <li><Link href="/admin" className="hover:text-blue-600 transition">Panel Admin</Link></li>
             </ul>
           </div>

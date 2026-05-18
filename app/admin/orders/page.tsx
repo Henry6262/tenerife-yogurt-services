@@ -37,7 +37,7 @@ export default async function AdminOrdersPage() {
     .reduce((sum, o) => sum + o.total, 0);
 
   return (
-    <main className="min-h-screen bg-stone-50 text-stone-900">
+    <main className="text-stone-900">
       <div className="mx-auto max-w-7xl px-6 py-10">
         <div className="mb-8 flex items-center justify-between">
           <div>

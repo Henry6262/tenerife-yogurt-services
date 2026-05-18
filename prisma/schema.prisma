@@ -18,6 +18,7 @@ model Business {
   timezone  String   @default("Atlantic/Canary")
   currency  String   @default("EUR")
   isActive  Boolean  @default(true)
+  ownerId   String?  // Clerk user ID
   createdAt DateTime @default(now())
 
   services    Service[]
@@ -161,6 +162,10 @@ model Booking {
   startsAt    DateTime
   endsAt      DateTime
   status      String   @default("confirmed") // confirmed, cancelled, completed, no_show
+  paymentStatus String @default("pending") // pending, paid, refunded, waived
+  depositAmount Float   @default(0)
+  stripePaymentIntentId String?
+  stripeClientSecret    String?
   notes       String?
   conversationId String?
   createdAt   DateTime @default(now())

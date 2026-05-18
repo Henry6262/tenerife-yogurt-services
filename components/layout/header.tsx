@@ -4,9 +4,11 @@ import Link from "next/link";
 import { useState } from "react";
 import { Menu, X, Bot, MessageCircle, Calendar } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { SignInButton, SignUpButton, UserButton, useAuth } from "@clerk/nextjs";
 
 export function Header() {
   const [mobileOpen, setMobileOpen] = useState(false);
+  const { isSignedIn } = useAuth();
 
   return (
     <header className="sticky top-0 z-50 w-full">
@@ -38,16 +40,30 @@ export function Header() {
                   <Calendar className="h-3.5 w-3.5" /> Reservar
                 </span>
               </Link>
+              <Link href="/bookings" className="px-3 py-2 text-sm font-medium text-slate-600 hover:text-slate-900 rounded-lg hover:bg-slate-100 transition">
+                Mis Citas
+              </Link>
             </nav>
 
-            {/* Desktop CTA */}
+            {/* Desktop Auth */}
             <div className="hidden md:flex items-center gap-2">
-              <Button variant="ghost" size="sm">
-                <Link href="/admin">Panel</Link>
-              </Button>
-              <Button size="sm">
-                <Link href="/admin/agent">Crear mi IA</Link>
-              </Button>
+              {!isSignedIn ? (
+                <>
+                  <SignInButton mode="modal">
+                    <Button variant="ghost" size="sm">Iniciar sesión</Button>
+                  </SignInButton>
+                  <SignUpButton mode="modal">
+                    <Button size="sm">Crear cuenta</Button>
+                  </SignUpButton>
+                </>
+              ) : (
+                <>
+                  <Link href="/admin">
+                    <Button variant="ghost" size="sm">Panel</Button>
+                  </Link>
+                  <UserButton />
+                </>
+              )}
             </div>
 
             {/* Mobile toggle */}
@@ -65,10 +81,27 @@ export function Header() {
               <Link href="/" onClick={() => setMobileOpen(false)} className="block px-3 py-2 text-sm font-medium text-slate-600 hover:text-slate-900 rounded-lg hover:bg-slate-100">Inicio</Link>
               <Link href="/ai" onClick={() => setMobileOpen(false)} className="block px-3 py-2 text-sm font-medium text-slate-600 hover:text-slate-900 rounded-lg hover:bg-slate-100">IA Concierge</Link>
               <Link href="/book" onClick={() => setMobileOpen(false)} className="block px-3 py-2 text-sm font-medium text-slate-600 hover:text-slate-900 rounded-lg hover:bg-slate-100">Reservar</Link>
-              <Link href="/admin" onClick={() => setMobileOpen(false)} className="block px-3 py-2 text-sm font-medium text-slate-600 hover:text-slate-900 rounded-lg hover:bg-slate-100">Panel</Link>
-              <Button size="sm" className="w-full mt-2">
-                <Link href="/admin/agent">Crear mi IA</Link>
-              </Button>
+              <Link href="/bookings" onClick={() => setMobileOpen(false)} className="block px-3 py-2 text-sm font-medium text-slate-600 hover:text-slate-900 rounded-lg hover:bg-slate-100">Mis Citas</Link>
+              {isSignedIn && (
+                <Link href="/admin" onClick={() => setMobileOpen(false)} className="block px-3 py-2 text-sm font-medium text-slate-600 hover:text-slate-900 rounded-lg hover:bg-slate-100">Panel</Link>
+              )}
+              <div className="pt-2 border-t border-slate-100">
+                {!isSignedIn ? (
+                  <>
+                    <SignInButton mode="modal">
+                      <Button variant="ghost" size="sm" className="w-full">Iniciar sesión</Button>
+                    </SignInButton>
+                    <SignUpButton mode="modal">
+                      <Button size="sm" className="w-full mt-2">Crear cuenta</Button>
+                    </SignUpButton>
+                  </>
+                ) : (
+                  <div className="flex items-center gap-2 px-3 py-2">
+                    <UserButton />
+                    <span className="text-sm text-slate-600">Mi cuenta</span>
+                  </div>
+                )}
+              </div>
             </div>
           )}
         </div>

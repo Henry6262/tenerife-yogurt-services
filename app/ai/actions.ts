@@ -1,8 +1,12 @@
 "use server";
 
 import { db } from "@/lib/db";
-import { loadSlotsForStaff, loadSlotsForAnyStaff } from "@/lib/slots";
+import { loadSlotsForStaff } from "@/lib/slots";
 import { parseIntent, type ParsedIntent } from "@/lib/ai-parser";
+import { extractIntentWithLLM, isOpenAIEnabled } from "@/lib/openai";
+import { createBookingPaymentIntent, isStripeEnabled } from "@/lib/stripe-booking";
+import { sendBookingConfirmation, sendAdminBookingAlert, isWhatsAppEnabled } from "@/lib/whatsapp-booking";
+import { sendBookingConfirmationEmail, isEmailEnabled } from "@/lib/email-booking";
 
 export interface AIResult {
   type: "success" | "no_slots" | "no_service" | "error";
@@ -61,7 +65,27 @@ function timeOfDayToMinutes(tod: ParsedIntent["timeOfDay"]): { min: number; max:
 }
 
 export async function aiSearchSlots(text: string): Promise<AIResult> {
-  const intent = parseIntent(text);
+  // Try LLM intent extraction if OpenAI is configured
+  let intent: ParsedIntent;
+  if (isOpenAIEnabled()) {
+    try {
+      const llmIntent = await extractIntentWithLLM(text);
+      intent = {
+        serviceType: llmIntent.serviceType || "any",
+        urgency: llmIntent.urgency,
+        timeOfDay: llmIntent.timeOfDay,
+        specificTime: llmIntent.specificTime,
+        location: null,
+        duration: null,
+        budget: null,
+        staffPreference: llmIntent.staffPreference,
+      };
+    } catch {
+      intent = parseIntent(text);
+    }
+  } else {
+    intent = parseIntent(text);
+  }
 
   // Map service type to service names
   const serviceTypeMap: Record<string, string[]> = {
@@ -196,24 +220,41 @@ function normalize(s: string): string {
   return s.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
 }
 
-export async function aiBook(optionId: string, customerName: string, customerPhone: string): Promise<{ success: boolean; bookingId?: string; error?: string }> {
-  // Parse composite id
+export async function aiBook(
+  optionId: string,
+  customerName: string,
+  customerPhone: string,
+  customerEmail?: string
+): Promise<{ success: boolean; bookingId?: string; depositAmount?: number; clientSecret?: string | null; paymentRequired?: boolean; error?: string }> {
   const [staffId, isoStart] = optionId.split("_");
   if (!staffId || !isoStart) return { success: false, error: "Invalid option" };
 
-  // Find the service this staff does at this time
   const staff = await db.staff.findUnique({
     where: { id: staffId },
     include: { staffServices: { include: { service: true } } },
   });
   if (!staff) return { success: false, error: "Staff not found" };
 
-  // For simplicity, book the first matching service
   const service = staff.staffServices[0]?.service;
   if (!service) return { success: false, error: "No service found" };
 
   const startsAt = new Date(isoStart);
   const endsAt = new Date(startsAt.getTime() + service.durationMinutes * 60000);
+
+  // Check for double-booking
+  const existing = await db.booking.findFirst({
+    where: {
+      staffId: staff.id,
+      status: { not: "cancelled" },
+      startsAt: { lt: endsAt },
+      endsAt: { gt: startsAt },
+    },
+  });
+  if (existing) {
+    return { success: false, error: "Este horario ya no está disponible. Por favor, elige otro." };
+  }
+
+  const depositAmount = Math.min(30, Math.max(5, Math.round(service.price * 0.2)));
 
   const booking = await db.booking.create({
     data: {
@@ -222,16 +263,100 @@ export async function aiBook(optionId: string, customerName: string, customerPho
       staffId: staff.id,
       customerName,
       customerPhone,
+      customerEmail: customerEmail || null,
       startsAt,
       endsAt,
+      depositAmount,
+      paymentStatus: depositAmount > 0 ? "pending" : "waived",
     },
   });
 
   await db.customer.upsert({
     where: { phone: customerPhone },
-    update: { name: customerName },
-    create: { phone: customerPhone, name: customerName },
+    update: { name: customerName, email: customerEmail || undefined },
+    create: { phone: customerPhone, name: customerName, email: customerEmail || undefined },
   });
 
-  return { success: true, bookingId: booking.id };
+  let clientSecret: string | null = null;
+  if (depositAmount > 0 && isStripeEnabled()) {
+    try {
+      const pi = await createBookingPaymentIntent({
+        amount: depositAmount * 100,
+        bookingId: booking.id,
+        customerName,
+        customerEmail,
+        serviceName: service.name,
+      });
+      clientSecret = pi.client_secret;
+      await db.booking.update({
+        where: { id: booking.id },
+        data: { stripePaymentIntentId: pi.id, stripeClientSecret: pi.client_secret },
+      });
+    } catch {
+      // Stripe failed
+    }
+  }
+
+  const business = await db.business.findUnique({ where: { id: staff.businessId } });
+  if (business && isWhatsAppEnabled()) {
+    const dateStr = startsAt.toLocaleDateString("es-ES", {
+      weekday: "long",
+      day: "numeric",
+      month: "long",
+    });
+    const timeStr = startsAt.toISOString().slice(11, 16);
+
+    await sendBookingConfirmation({
+      phone: customerPhone,
+      customerName,
+      serviceName: service.name,
+      staffName: staff.name,
+      date: dateStr,
+      time: timeStr,
+      businessName: business.name,
+      businessAddress: business.address,
+      depositAmount: clientSecret ? depositAmount : undefined,
+    });
+
+    if (business.phone) {
+      await sendAdminBookingAlert({
+        adminPhone: business.phone,
+        customerName,
+        serviceName: service.name,
+        staffName: staff.name,
+        date: dateStr,
+        time: timeStr,
+        businessName: business.name,
+      });
+    }
+  }
+
+  if (customerEmail && isEmailEnabled()) {
+    const dateStr = startsAt.toLocaleDateString("es-ES", {
+      weekday: "long",
+      day: "numeric",
+      month: "long",
+    });
+    const timeStr = startsAt.toISOString().slice(11, 16);
+
+    await sendBookingConfirmationEmail({
+      to: customerEmail,
+      customerName,
+      serviceName: service.name,
+      staffName: staff.name,
+      date: dateStr,
+      time: timeStr,
+      businessName: business?.name || "",
+      businessAddress: business?.address,
+      depositAmount: clientSecret ? depositAmount : undefined,
+    });
+  }
+
+  return {
+    success: true,
+    bookingId: booking.id,
+    depositAmount,
+    clientSecret,
+    paymentRequired: depositAmount > 0 && !!clientSecret,
+  };
 }

@@ -1,7 +1,7 @@
 "use client";
 
 import { Bot, Clock, Shield, Zap, TrendingUp, Users } from "lucide-react";
-import { FadeIn } from "@/components/animations/fade-in";
+import { ScrollReveal } from "@/components/animations/scroll-reveal";
 import { SpotlightCard } from "@/components/animations/spotlight-card";
 
 const features = [
@@ -51,28 +51,31 @@ const features = [
 
 export function Features() {
   return (
-    <section className="relative py-24">
+    <section className="relative py-24 overflow-hidden">
       <div className="max-w-5xl mx-auto px-4">
-        <FadeIn className="text-center mb-16">
+        <ScrollReveal className="text-center mb-16">
           <h2 className="text-4xl font-extrabold tracking-tight text-slate-900 mb-4">
             Todo lo que <span className="text-gradient-blue">necesitas</span>
           </h2>
           <p className="text-lg text-slate-500 max-w-xl mx-auto">
             Una plataforma completa para digitalizar tu negocio y nunca perder una cita.
           </p>
-        </FadeIn>
+        </ScrollReveal>
 
         <div className="grid md:grid-cols-3 gap-4">
           {features.map((feature, i) => (
-            <FadeIn
+            <ScrollReveal
               key={feature.title}
               delay={i * 0.1}
               className={feature.size === "large" ? "md:col-span-2" : ""}
             >
-              <SpotlightCard className="h-full group" spotlightColor={`${feature.color}08`}>
+              <SpotlightCard
+                className="h-full group transition-all duration-300 hover:shadow-[0_8px_40px_rgba(37,99,235,0.1)]"
+                spotlightColor={`${feature.color}08`}
+              >
                 <div className="p-6">
                   <div
-                    className="inline-flex h-10 w-10 items-center justify-center rounded-xl mb-4"
+                    className="inline-flex h-10 w-10 items-center justify-center rounded-xl mb-4 transition-transform duration-300 group-hover:scale-110"
                     style={{ backgroundColor: `${feature.color}12` }}
                   >
                     <feature.icon className="h-5 w-5" style={{ color: feature.color }} />
@@ -81,7 +84,7 @@ export function Features() {
                   <p className="text-sm text-slate-500 leading-relaxed">{feature.description}</p>
                 </div>
               </SpotlightCard>
-            </FadeIn>
+            </ScrollReveal>
           ))}
         </div>
       </div>

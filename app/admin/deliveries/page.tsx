@@ -21,7 +21,7 @@ export default async function DeliveriesPage() {
   const routeUrl = pendingCount > 0 ? buildMapsUrl(leads.map((l) => l.address!)) : null;
 
   return (
-    <main className="min-h-screen bg-stone-50 p-6">
+    <main className="p-6">
       <div className="max-w-5xl mx-auto">
         <h1 className="text-2xl font-bold mb-2">Ruta de Entregas</h1>
         <p className="text-stone-500 mb-6">

@@ -31,7 +31,7 @@ export default async function AdminSubscriptionsPage() {
   const monthlyRecurring = activeCount * 8 * 4; // €8/week * 4 weeks
 
   return (
-    <main className="min-h-screen bg-stone-50 text-stone-900">
+    <main className="text-stone-900">
       <div className="mx-auto max-w-6xl px-6 py-10">
         <div className="mb-8 flex items-center justify-between">
           <div>

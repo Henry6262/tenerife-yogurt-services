@@ -11,7 +11,7 @@ export default async function AdminPromosPage() {
   const promos = await db.promoCode.findMany({ orderBy: { createdAt: "desc" } });
 
   return (
-    <main className="min-h-screen bg-stone-50 text-stone-900">
+    <main className="text-stone-900">
       <div className="mx-auto max-w-5xl px-6 py-10">
         <div className="mb-8">
           <h1 className="text-3xl font-bold">Códigos Promocionales</h1>

@@ -3,7 +3,8 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { createBooking } from "./actions";
-import { Calendar, Clock, User, Phone, Mail, CheckCircle } from "lucide-react";
+import { BookingPayment } from "@/components/booking-payment";
+import { Calendar, Clock, User, Phone, Mail, CheckCircle, CreditCard } from "lucide-react";
 
 interface Service {
   id: string;
@@ -37,8 +38,12 @@ export function ConfirmStep({ service, staff, dateStr, timeStr, businessSlug }: 
   const [loading, setLoading] = useState(false);
   const [done, setDone] = useState(false);
   const [error, setError] = useState("");
+  const [paymentRequired, setPaymentRequired] = useState(false);
+  const [clientSecret, setClientSecret] = useState<string | null>(null);
+  const [depositAmount, setDepositAmount] = useState(0);
+  const [bookingId, setBookingId] = useState<string | null>(null);
 
-  if (done) {
+  if (done && bookingId) {
     return (
       <div className="text-center py-10">
         <CheckCircle className="w-16 h-16 text-green-500 mx-auto mb-4" />
@@ -47,11 +52,27 @@ export function ConfirmStep({ service, staff, dateStr, timeStr, businessSlug }: 
           Te esperamos el {dateStr} a las {timeStr.slice(11, 16)}
         </p>
         <button
-          onClick={() => router.push("/")}
+          onClick={() => router.push(`/bookings/confirmation/${bookingId}`)}
           className="px-6 py-3 bg-rose-600 text-white rounded-lg font-semibold hover:bg-rose-700 transition"
         >
-          Volver al inicio
+          Ver detalles de mi cita
         </button>
+      </div>
+    );
+  }
+
+  if (paymentRequired && clientSecret && bookingId) {
+    return (
+      <div>
+        <h1 className="text-2xl font-bold text-gray-900 mb-1 text-center">Depósito requerido</h1>
+        <p className="text-gray-500 text-center mb-6">
+          Para garantizar tu cita, paga un depósito de <strong>{depositAmount}€</strong>
+        </p>
+        <BookingPayment
+          clientSecret={clientSecret}
+          amount={depositAmount}
+          onSuccess={() => setDone(true)}
+        />
       </div>
     );
   }
@@ -82,7 +103,14 @@ export function ConfirmStep({ service, staff, dateStr, timeStr, businessSlug }: 
 
     setLoading(false);
     if (result.success) {
-      setDone(true);
+      setBookingId(result.bookingId || null);
+      if (result.paymentRequired && result.clientSecret) {
+        setPaymentRequired(true);
+        setClientSecret(result.clientSecret);
+        setDepositAmount(result.depositAmount || 0);
+      } else {
+        setDone(true);
+      }
     } else {
       setError("No se pudo completar la reserva. Inténtalo de nuevo.");
     }
@@ -119,6 +147,12 @@ export function ConfirmStep({ service, staff, dateStr, timeStr, businessSlug }: 
           </div>
         )}
         <div className="text-lg font-bold text-gray-900 pt-1">{service.price}€</div>
+        {service.price > 0 && (
+          <div className="text-xs text-gray-500 flex items-center gap-1">
+            <CreditCard className="w-3 h-3" />
+            Depósito de garantía: {Math.min(30, Math.max(5, Math.round(service.price * 0.2)))}€
+          </div>
+        )}
       </div>
 
       {/* Form */}

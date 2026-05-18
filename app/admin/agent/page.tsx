@@ -1,17 +1,12 @@
 import { db } from "@/lib/db";
+import { getCurrentUserBusiness } from "@/lib/auth";
 import Link from "next/link";
 import { ArrowLeft, Save, Bot, Mic, Palette, Sparkles } from "lucide-react";
 import { redirect } from "next/navigation";
 
 export default async function AgentBuilderPage() {
-  const business = await db.business.findFirst({ include: { agentConfig: true } });
-  if (!business) {
-    return (
-      <div className="max-w-2xl mx-auto px-4 py-20 text-center">
-        <p className="text-gray-500">Primero crea un negocio.</p>
-      </div>
-    );
-  }
+  const business = await getCurrentUserBusiness();
+  if (!business) redirect("/admin/onboarding");
 
   const cfg = business.agentConfig;
   const businessId = business.id;

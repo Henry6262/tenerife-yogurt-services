@@ -5,6 +5,7 @@ import { HowItWorks } from "@/components/landing/how-it-works";
 import { Features } from "@/components/landing/features";
 import { BusinessesShowcase } from "@/components/landing/businesses-showcase";
 import { TrustMarquee } from "@/components/landing/trust-marquee";
+import { Pricing } from "@/components/landing/pricing";
 
 export default async function HomePage() {
   const businesses = await db.business.findMany({
@@ -33,6 +34,7 @@ export default async function HomePage() {
       <AgentsShowcase agents={agents} />
       <HowItWorks />
       <Features />
+      <Pricing />
       <BusinessesShowcase businesses={businesses} />
     </>
   );

@@ -1,6 +1,7 @@
 import { db } from "./db";
 import { parseIntent, type ParsedIntent } from "./ai-parser";
-import { loadSlotsForStaff, loadSlotsForAnyStaff } from "./slots";
+import { loadSlotsForStaff } from "./slots";
+import { extractIntentWithLLM, generateAgentReply, isOpenAIEnabled } from "./openai";
 
 export interface AgentPersonality {
   agentName: string;
@@ -123,19 +124,9 @@ function applyPersonality(text: string, personality: AgentPersonality): string {
 export async function agentSearch(
   businessSlug: string,
   userText: string,
-  personality: AgentPersonality
+  personality: AgentPersonality,
+  conversationHistory: { role: "user" | "assistant"; content: string }[] = []
 ): Promise<AgentResponse> {
-  const intent = parseIntent(userText);
-
-  // Check for greetings/farewells
-  const lower = userText.toLowerCase();
-  if (["hola", "buenos dias", "buenas", "hey", "saludos"].some((w) => lower.includes(w))) {
-    return { text: personality.greeting, type: "greeting" };
-  }
-  if (["adios", "hasta luego", "chao", "gracias", "nos vemos"].some((w) => lower.includes(w))) {
-    return { text: personality.farewell, type: "farewell" };
-  }
-
   const business = await db.business.findUnique({
     where: { slug: businessSlug },
     include: {
@@ -145,6 +136,68 @@ export async function agentSearch(
   });
   if (!business) {
     return { text: personality.fallbackMessage, type: "fallback" };
+  }
+
+  // Try LLM intent extraction if OpenAI is configured
+  let intent: ParsedIntent;
+  let llmReply: string | null = null;
+
+  if (isOpenAIEnabled()) {
+    try {
+      const llmIntent = await extractIntentWithLLM(userText, conversationHistory);
+
+      if (llmIntent.isGreeting) {
+        const reply = await generateAgentReply({
+          agentName: personality.agentName,
+          tone: personality.tone,
+          businessName: business.name,
+          services: business.services.map((s) => s.name),
+          foundSlots: 0,
+          greeting: true,
+        }, userText);
+        return { text: reply, type: "greeting" };
+      }
+      if (llmIntent.isFarewell) {
+        const reply = await generateAgentReply({
+          agentName: personality.agentName,
+          tone: personality.tone,
+          businessName: business.name,
+          services: business.services.map((s) => s.name),
+          foundSlots: 0,
+          farewell: true,
+        }, userText);
+        return { text: reply, type: "farewell" };
+      }
+      if (llmIntent.rawReply) {
+        return { text: llmIntent.rawReply, type: "fallback" };
+      }
+
+      intent = {
+        serviceType: llmIntent.serviceType || "any",
+        urgency: llmIntent.urgency,
+        timeOfDay: llmIntent.timeOfDay,
+        specificTime: llmIntent.specificTime,
+        location: null,
+        duration: null,
+        budget: null,
+        staffPreference: llmIntent.staffPreference,
+      };
+    } catch {
+      // Fallback to rule-based parser
+      intent = parseIntent(userText);
+    }
+  } else {
+    // Rule-based fallback
+    intent = parseIntent(userText);
+
+    // Check for greetings/farewells
+    const lower = userText.toLowerCase();
+    if (["hola", "buenos dias", "buenas", "hey", "saludos"].some((w) => lower.includes(w))) {
+      return { text: personality.greeting, type: "greeting" };
+    }
+    if (["adios", "hasta luego", "chao", "gracias", "nos vemos"].some((w) => lower.includes(w))) {
+      return { text: personality.farewell, type: "farewell" };
+    }
   }
 
   // Map service type to service names
@@ -165,6 +218,19 @@ export async function agentSearch(
   );
 
   if (services.length === 0) {
+    if (isOpenAIEnabled()) {
+      try {
+        const reply = await generateAgentReply({
+          agentName: personality.agentName,
+          tone: personality.tone,
+          businessName: business.name,
+          services: business.services.map((s) => s.name),
+          foundSlots: 0,
+          noResults: true,
+        }, userText);
+        return { text: reply, type: "no_results" };
+      } catch { /* fall through */ }
+    }
     const tpl = TONE_TEMPLATES[personality.tone] || TONE_TEMPLATES.friendly;
     return { text: applyPersonality(tpl.noResult, personality), type: "no_results" };
   }
@@ -217,16 +283,41 @@ export async function agentSearch(
   options.sort((a, b) => a.startTime.localeCompare(b.startTime));
   const top = options.slice(0, 5);
 
-  const tpl = TONE_TEMPLATES[personality.tone] || TONE_TEMPLATES.friendly;
-
   if (top.length === 0) {
+    if (isOpenAIEnabled()) {
+      try {
+        const reply = await generateAgentReply({
+          agentName: personality.agentName,
+          tone: personality.tone,
+          businessName: business.name,
+          services: business.services.map((s) => s.name),
+          foundSlots: 0,
+          noResults: true,
+        }, userText);
+        return { text: reply, type: "no_results" };
+      } catch { /* fall through */ }
+    }
+    const tpl = TONE_TEMPLATES[personality.tone] || TONE_TEMPLATES.friendly;
     return { text: applyPersonality(tpl.noResult, personality), type: "no_results" };
   }
 
-  // Inject brand flavor
+  // Generate reply with LLM if available
+  if (isOpenAIEnabled()) {
+    try {
+      const reply = await generateAgentReply({
+        agentName: personality.agentName,
+        tone: personality.tone,
+        businessName: business.name,
+        services: business.services.map((s) => s.name),
+        foundSlots: top.length,
+      }, userText);
+      return { text: reply, options: top, type: "results" };
+    } catch { /* fall through to templates */ }
+  }
+
+  const tpl = TONE_TEMPLATES[personality.tone] || TONE_TEMPLATES.friendly;
   let resultText = applyPersonality(tpl.result.replace("{count}", String(top.length)), personality);
 
-  // Add brand guideline mention if relevant
   if (personality.brandGuidelines && intent.serviceType === "hair") {
     if (personality.brandGuidelines.toLowerCase().includes("vegano")) {
       resultText += " Todos nuestros tratamientos capilares son 100% veganos.";
