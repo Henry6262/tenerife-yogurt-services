@@ -46,7 +46,7 @@ export default async function AdminLayout({ children }: { children: React.ReactN
             <div className="w-8 h-8 rounded-lg bg-emerald-600 flex items-center justify-center text-white font-bold text-sm">
               T
             </div>
-            <span className="font-bold text-stone-800">TenerifeAI</span>
+            <span className="font-bold text-stone-800">Bookit AI</span>
           </Link>
         </div>
 
@@ -68,7 +68,7 @@ export default async function AdminLayout({ children }: { children: React.ReactN
 
       {/* Mobile header */}
       <div className="md:hidden fixed top-0 left-0 right-0 z-50 bg-white border-b border-stone-200 px-4 py-3 flex items-center justify-between">
-        <Link href="/admin" className="font-bold text-stone-800">TenerifeAI</Link>
+        <Link href="/admin" className="font-bold text-stone-800">Bookit AI</Link>
         <MobileNav nav={nav} />
       </div>
 

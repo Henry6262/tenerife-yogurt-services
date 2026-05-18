@@ -32,7 +32,10 @@ export function Hero() {
       {/* Vignette */}
       <div className="absolute inset-0 bg-radial-gradient from-transparent via-transparent to-slate-950/80 pointer-events-none" />
 
-      <div className="relative z-10 max-w-4xl mx-auto px-4 text-center">
+      {/* Bottom gradient transition — fades dark hero into light sections below */}
+      <div className="absolute bottom-0 left-0 right-0 h-40 bg-gradient-to-t from-slate-50 via-slate-950/60 to-transparent pointer-events-none" />
+
+      <div className="relative z-10 max-w-4xl mx-auto px-4 text-center pt-16">
         {/* Badge */}
         <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white/10 border border-white/10 text-blue-300 text-sm font-medium mb-8 backdrop-blur-sm">
           <Sparkles className="h-4 w-4" />

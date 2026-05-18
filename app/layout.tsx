@@ -5,7 +5,7 @@ import { Header } from "@/components/layout/header";
 import { Footer } from "@/components/layout/footer";
 
 export const metadata: Metadata = {
-  title: "TenerifeAI — Reservas con Inteligencia Artificial",
+  title: "Bookit AI — Reservas con Inteligencia Artificial",
   description: "La plataforma de IA para reservas de belleza, bienestar y más en Tenerife. Cada negocio tiene su propio agente inteligente.",
 };
 

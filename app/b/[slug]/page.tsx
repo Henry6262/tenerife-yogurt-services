@@ -116,7 +116,7 @@ export default async function BusinessProfilePage({ params }: PageProps) {
       {/* Footer */}
       <div className="text-center py-6 border-t border-stone-200">
         <p className="text-xs text-stone-400">
-          Reservas powered by <a href="/" className="text-emerald-600 hover:underline">TenerifeAI</a>
+          Reservas powered by <a href="/" className="text-emerald-600 hover:underline">Bookit AI</a>
         </p>
       </div>
     </main>

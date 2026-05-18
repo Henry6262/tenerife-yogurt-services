@@ -1,110 +1,141 @@
 "use client";
 
 import Link from "next/link";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Menu, X, Bot, MessageCircle, Calendar } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { SignInButton, SignUpButton, UserButton, useAuth } from "@clerk/nextjs";
 
 export function Header() {
   const [mobileOpen, setMobileOpen] = useState(false);
+  const [scrolled, setScrolled] = useState(false);
   const { isSignedIn } = useAuth();
 
+  useEffect(() => {
+    const onScroll = () => setScrolled(window.scrollY > 20);
+    window.addEventListener("scroll", onScroll);
+    return () => window.removeEventListener("scroll", onScroll);
+  }, []);
+
   return (
-    <header className="sticky top-0 z-50 w-full">
-      <div className="mx-4 mt-3">
-        <div className="glass rounded-2xl border border-white/40 shadow-[0_4px_24px_rgba(0,0,0,0.06)]">
-          <div className="flex h-14 items-center justify-between px-5">
-            {/* Logo */}
-            <Link href="/" className="flex items-center gap-2">
-              <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-blue-600 text-white">
-                <Bot className="h-4 w-4" />
-              </div>
-              <span className="text-lg font-bold tracking-tight text-slate-900">
-                Tenerife<span className="text-blue-600">AI</span>
-              </span>
-            </Link>
+    <header
+      className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
+        scrolled
+          ? "bg-white/80 backdrop-blur-md border-b border-slate-200/60 shadow-sm"
+          : "bg-transparent"
+      }`}
+    >
+      <div className="max-w-6xl mx-auto px-4">
+        <div className="flex h-11 items-center justify-between">
+          {/* Logo */}
+          <Link href="/" className="flex items-center gap-1.5">
+            <div className={`flex h-7 w-7 items-center justify-center rounded-md text-white transition-colors ${scrolled ? "bg-blue-600" : "bg-white/20"}`}>
+              <Bot className="h-4 w-4" />
+            </div>
+            <span className={`text-base font-bold tracking-tight transition-colors ${scrolled ? "text-slate-900" : "text-white"}`}>
+              Bookit<span className={scrolled ? "text-blue-600" : "text-blue-400"}>AI</span>
+            </span>
+          </Link>
 
-            {/* Desktop Nav */}
-            <nav className="hidden md:flex items-center gap-1">
-              <Link href="/" className="px-3 py-2 text-sm font-medium text-slate-600 hover:text-slate-900 rounded-lg hover:bg-slate-100 transition">
-                Inicio
-              </Link>
-              <Link href="/ai" className="px-3 py-2 text-sm font-medium text-slate-600 hover:text-slate-900 rounded-lg hover:bg-slate-100 transition">
-                <span className="flex items-center gap-1.5">
-                  <MessageCircle className="h-3.5 w-3.5" /> IA Concierge
+          {/* Desktop Nav */}
+          <nav className="hidden md:flex items-center gap-1">
+            {[
+              { href: "/", label: "Inicio" },
+              { href: "/ai", label: "IA Concierge", icon: MessageCircle },
+              { href: "/book", label: "Reservar", icon: Calendar },
+              { href: "/bookings", label: "Mis Citas" },
+            ].map((item) => (
+              <Link
+                key={item.href}
+                href={item.href}
+                className={`px-2.5 py-1 text-sm font-medium rounded-md transition ${
+                  scrolled
+                    ? "text-slate-600 hover:text-slate-900 hover:bg-slate-100"
+                    : "text-white/70 hover:text-white hover:bg-white/10"
+                }`}
+              >
+                <span className="flex items-center gap-1">
+                  {item.icon && <item.icon className="h-3 w-3" />}
+                  {item.label}
                 </span>
               </Link>
-              <Link href="/book" className="px-3 py-2 text-sm font-medium text-slate-600 hover:text-slate-900 rounded-lg hover:bg-slate-100 transition">
-                <span className="flex items-center gap-1.5">
-                  <Calendar className="h-3.5 w-3.5" /> Reservar
-                </span>
-              </Link>
-              <Link href="/bookings" className="px-3 py-2 text-sm font-medium text-slate-600 hover:text-slate-900 rounded-lg hover:bg-slate-100 transition">
-                Mis Citas
-              </Link>
-            </nav>
+            ))}
+          </nav>
 
-            {/* Desktop Auth */}
-            <div className="hidden md:flex items-center gap-2">
+          {/* Desktop Auth */}
+          <div className="hidden md:flex items-center gap-1.5">
+            {!isSignedIn ? (
+              <>
+                <SignInButton mode="modal">
+                  <Button variant="ghost" size="sm" className={`text-sm h-8 ${scrolled ? "" : "text-white/80 hover:text-white hover:bg-white/10"}`}>
+                    Iniciar sesión
+                  </Button>
+                </SignInButton>
+                <SignUpButton mode="modal">
+                  <Button size="sm" className="text-sm h-8 bg-blue-600 hover:bg-blue-500">Crear cuenta</Button>
+                </SignUpButton>
+              </>
+            ) : (
+              <>
+                <Link href="/admin">
+                  <Button variant="ghost" size="sm" className={`text-sm h-8 ${scrolled ? "" : "text-white/80 hover:text-white hover:bg-white/10"}`}>Panel</Button>
+                </Link>
+                <UserButton />
+              </>
+            )}
+          </div>
+
+          {/* Mobile toggle */}
+          <button
+            onClick={() => setMobileOpen(!mobileOpen)}
+            className={`md:hidden p-1.5 rounded-md transition ${
+              scrolled
+                ? "text-slate-600 hover:text-slate-900 hover:bg-slate-100"
+                : "text-white/80 hover:text-white hover:bg-white/10"
+            }`}
+          >
+            {mobileOpen ? <X className="h-4 w-4" /> : <Menu className="h-4 w-4" />}
+          </button>
+        </div>
+
+        {/* Mobile menu */}
+        {mobileOpen && (
+          <div className="md:hidden bg-white/95 backdrop-blur-md border-t border-slate-100 px-4 py-3 space-y-1 rounded-b-xl mb-2 shadow-lg">
+            {[
+              { href: "/", label: "Inicio" },
+              { href: "/ai", label: "IA Concierge" },
+              { href: "/book", label: "Reservar" },
+              { href: "/bookings", label: "Mis Citas" },
+              ...(isSignedIn ? [{ href: "/admin", label: "Panel" }] : []),
+            ].map((item) => (
+              <Link
+                key={item.href}
+                href={item.href}
+                onClick={() => setMobileOpen(false)}
+                className="block px-3 py-2 text-sm font-medium text-slate-600 hover:text-slate-900 rounded-lg hover:bg-slate-100"
+              >
+                {item.label}
+              </Link>
+            ))}
+            <div className="pt-2 border-t border-slate-100">
               {!isSignedIn ? (
                 <>
                   <SignInButton mode="modal">
-                    <Button variant="ghost" size="sm">Iniciar sesión</Button>
+                    <Button variant="ghost" size="sm" className="w-full text-sm">Iniciar sesión</Button>
                   </SignInButton>
                   <SignUpButton mode="modal">
-                    <Button size="sm">Crear cuenta</Button>
+                    <Button size="sm" className="w-full mt-1.5 text-sm">Crear cuenta</Button>
                   </SignUpButton>
                 </>
               ) : (
-                <>
-                  <Link href="/admin">
-                    <Button variant="ghost" size="sm">Panel</Button>
-                  </Link>
+                <div className="flex items-center gap-2 px-3 py-2">
                   <UserButton />
-                </>
+                  <span className="text-sm text-slate-600">Mi cuenta</span>
+                </div>
               )}
             </div>
-
-            {/* Mobile toggle */}
-            <button
-              onClick={() => setMobileOpen(!mobileOpen)}
-              className="md:hidden p-2 text-slate-600 hover:text-slate-900 rounded-lg hover:bg-slate-100"
-            >
-              {mobileOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
-            </button>
           </div>
-
-          {/* Mobile menu */}
-          {mobileOpen && (
-            <div className="md:hidden border-t border-slate-100 px-5 py-4 space-y-2">
-              <Link href="/" onClick={() => setMobileOpen(false)} className="block px-3 py-2 text-sm font-medium text-slate-600 hover:text-slate-900 rounded-lg hover:bg-slate-100">Inicio</Link>
-              <Link href="/ai" onClick={() => setMobileOpen(false)} className="block px-3 py-2 text-sm font-medium text-slate-600 hover:text-slate-900 rounded-lg hover:bg-slate-100">IA Concierge</Link>
-              <Link href="/book" onClick={() => setMobileOpen(false)} className="block px-3 py-2 text-sm font-medium text-slate-600 hover:text-slate-900 rounded-lg hover:bg-slate-100">Reservar</Link>
-              <Link href="/bookings" onClick={() => setMobileOpen(false)} className="block px-3 py-2 text-sm font-medium text-slate-600 hover:text-slate-900 rounded-lg hover:bg-slate-100">Mis Citas</Link>
-              {isSignedIn && (
-                <Link href="/admin" onClick={() => setMobileOpen(false)} className="block px-3 py-2 text-sm font-medium text-slate-600 hover:text-slate-900 rounded-lg hover:bg-slate-100">Panel</Link>
-              )}
-              <div className="pt-2 border-t border-slate-100">
-                {!isSignedIn ? (
-                  <>
-                    <SignInButton mode="modal">
-                      <Button variant="ghost" size="sm" className="w-full">Iniciar sesión</Button>
-                    </SignInButton>
-                    <SignUpButton mode="modal">
-                      <Button size="sm" className="w-full mt-2">Crear cuenta</Button>
-                    </SignUpButton>
-                  </>
-                ) : (
-                  <div className="flex items-center gap-2 px-3 py-2">
-                    <UserButton />
-                    <span className="text-sm text-slate-600">Mi cuenta</span>
-                  </div>
-                )}
-              </div>
-            </div>
-          )}
-        </div>
+        )}
       </div>
     </header>
   );

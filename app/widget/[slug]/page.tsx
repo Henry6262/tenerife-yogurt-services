@@ -32,7 +32,7 @@ export default async function WidgetPage({ params, searchParams }: PageProps) {
         <p className="text-lg font-medium text-gray-900 mb-2">{business.name}</p>
         <p className="text-sm text-gray-500">Este negocio aún no tiene servicios disponibles para reservar online.</p>
         <p className="text-xs text-gray-400 mt-4">
-          Powered by <a href="/" target="_blank" className="text-emerald-600 hover:underline">TenerifeAI</a>
+          Powered by <a href="/" target="_blank" className="text-emerald-600 hover:underline">Bookit AI</a>
         </p>
       </div>
     );
@@ -48,7 +48,7 @@ export default async function WidgetPage({ params, searchParams }: PageProps) {
       />
       <div className="mt-auto py-3 text-center border-t border-gray-100">
         <p className="text-xs text-gray-400">
-          Powered by <a href="/" target="_blank" className="text-emerald-600 hover:underline">TenerifeAI</a>
+          Powered by <a href="/" target="_blank" className="text-emerald-600 hover:underline">Bookit AI</a>
         </p>
       </div>
     </div>

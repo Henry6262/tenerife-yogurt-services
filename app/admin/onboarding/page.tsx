@@ -14,7 +14,7 @@ export default async function OnboardingPage() {
     <main className="text-stone-900">
       <div className="mx-auto max-w-xl px-6 py-16">
         <div className="text-center mb-10">
-          <h1 className="text-3xl font-bold mb-2">Bienvenido a TenerifeAI</h1>
+          <h1 className="text-3xl font-bold mb-2">Bienvenido a Bookit AI</h1>
           <p className="text-stone-500">Crea tu negocio para empezar a recibir reservas con IA</p>
         </div>
 

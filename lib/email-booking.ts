@@ -26,7 +26,7 @@ async function sendEmail({
       "Content-Type": "application/json",
     },
     body: JSON.stringify({
-      from: "TenerifeAI <bookings@tenerifeai.com>",
+      from: "Bookit AI <bookings@bookitai.com>",
       to,
       subject,
       html,
@@ -76,7 +76,7 @@ export async function sendBookingConfirmationEmail({
         ${depositText}
       </div>
       <p style="color:#666;font-size:14px;">¿Necesitas cancelar o modificar tu cita? Visita <a href="https://tenerife-services-indol.vercel.app/bookings">Mis Citas</a>.</p>
-      <p style="color:#a8a29e;font-size:12px;margin-top:24px;">Enviado por TenerifeAI</p>
+      <p style="color:#a8a29e;font-size:12px;margin-top:24px;">Enviado por Bookit AI</p>
     </div>
   `;
 

@@ -1,7 +1,7 @@
 import { redirect } from "next/navigation";
 
 export const metadata = {
-  title: "Mis Citas — TenerifeAI",
+  title: "Mis Citas — Bookit AI",
 };
 
 export default function BookingsLookupPage() {

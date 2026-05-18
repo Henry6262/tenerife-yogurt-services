@@ -44,7 +44,7 @@ export function Footer() {
 
         <div className="border-t border-slate-200 pt-6 flex flex-col sm:flex-row items-center justify-between gap-4">
           <p className="text-xs text-slate-400">
-            © 2026 TenerifeAI. Todos los derechos reservados.
+            © 2026 Bookit AI. Todos los derechos reservados.
           </p>
           <p className="text-xs text-slate-400">
             Hecho con 💙 en Tenerife

@@ -51,7 +51,7 @@ const plans = [
       "Soporte 24/7",
     ],
     cta: "Contactar",
-    href: "mailto:hola@tenerifeai.com",
+    href: "mailto:hola@bookitai.com",
     highlighted: false,
   },
 ];
